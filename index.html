@@ -14,15 +14,15 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#fff5f5',
-                            100: '#ffe3e3',
-                            500: '#e53e3e',
-                            600: '#c53030',
-                            700: '#9b2c2c',
+                            50: '#fff7f4',
+                            100: '#ffe4dc',
+                            500: '#d92d20',
+                            600: '#b42318',
+                            700: '#8f1d15',
                         },
-                        darkBg: '#0f172a',
-                        darkCard: '#1e293b',
-                        darkBorder: '#334155'
+                        darkBg: '#1f2937',
+                        darkCard: '#273449',
+                        darkBorder: '#475569'
                     }
                 }
             }
@@ -59,8 +59,127 @@
     </script>
 
     <style>
+        html {
+            font-size: 16px;
+        }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(239, 68, 68, 0.12), transparent 32rem),
+                radial-gradient(circle at top right, rgba(59, 130, 246, 0.14), transparent 34rem),
+                linear-gradient(135deg, #fffafa 0%, #f8fafc 42%, #fff7ed 100%) !important;
+            color: #263142;
+        }
+        .dark body {
+            background:
+                radial-gradient(circle at top left, rgba(248, 113, 113, 0.12), transparent 34rem),
+                radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 36rem),
+                linear-gradient(135deg, #111827 0%, #1f2937 50%, #2f3542 100%) !important;
+        }
+        nav,
+        footer {
+            background-color: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(14px);
+        }
+        .dark nav,
+        .dark footer {
+            background-color: rgba(39, 52, 73, 0.92);
+        }
+        main,
+        nav > div,
+        footer {
+            width: 100%;
+            max-width: none !important;
+        }
+        main {
+            padding-left: clamp(1rem, 2vw, 2rem) !important;
+            padding-right: clamp(1rem, 2vw, 2rem) !important;
+        }
+        .nav-btn,
+        input,
+        select,
+        textarea {
+            font-size: 0.9rem;
+        }
+        button {
+            font-size: 0.82rem;
+        }
+        #master,
+        #master input,
+        #master select,
+        #master textarea,
+        #master label,
+        #master p,
+        #master button,
+        #master .text-xs,
+        #master .text-sm {
+            font-size: 0.78rem !important;
+        }
+        #rekap,
+        #rekap input,
+        #rekap select,
+        #rekap label,
+        #rekap button,
+        #rekap table,
+        #rekap thead th,
+        #rekap tbody td,
+        #rekap .text-xs,
+        #rekap .text-sm {
+            font-size: 0.78rem !important;
+        }
+        #master button,
+        #rekap button,
+        #peta button,
+        #configModal button,
+        #detailModal button,
+        #confirmModal button,
+        #demoConnectionBanner button,
+        .nav-btn {
+            padding: 0.48rem 0.78rem !important;
+            font-size: 0.82rem !important;
+            line-height: 1.2;
+        }
+        #rekap button {
+            font-size: 0.78rem !important;
+        }
+        #master button {
+            font-size: 0.76rem !important;
+        }
+        #rekap .rekap-table-scroll {
+            max-height: min(68vh, 720px);
+            overflow: auto;
+            scrollbar-gutter: stable both-edges;
+        }
+        #rekap table {
+            min-width: 1520px;
+            font-size: 0.78rem;
+        }
+        #rekap thead {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        #rekap thead tr {
+            background: linear-gradient(90deg, rgba(217, 45, 32, 0.08), rgba(59, 130, 246, 0.08), rgba(249, 115, 22, 0.08));
+        }
+        #rekap thead th {
+            background-color: rgba(248, 250, 252, 0.98);
+            box-shadow: inset 0 -1px 0 rgba(148, 163, 184, 0.28);
+            font-size: 0.78rem;
+            color: #475569;
+        }
+        .dark #rekap thead th {
+            background-color: rgba(39, 52, 73, 0.98);
+            color: #cbd5e1;
+        }
+        #rekapBody {
+            font-size: 0.78rem;
+            line-height: 1.55;
+        }
+        #rekap .rekap-note-cell {
+            min-width: 220px;
+            max-width: 320px;
+            white-space: normal;
         }
         /* Custom scrollbar */
         ::-webkit-scrollbar {
@@ -84,13 +203,52 @@
             width: 100%;
             z-index: 10;
         }
+        body.auth-locked .app-shell {
+            display: none !important;
+        }
+        body:not(.auth-locked) #loginScreen {
+            display: none !important;
+        }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+<body class="auth-locked bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center px-4 py-10">
+        <div class="w-full max-w-md bg-white dark:bg-darkCard border border-slate-100 dark:border-darkBorder rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-6 border-b border-slate-100 dark:border-darkBorder bg-slate-50 dark:bg-slate-800/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-brand-500 text-white flex items-center justify-center shadow-sm">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-extrabold text-slate-900 dark:text-white">Login Aplikasi KDMP</h1>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Masukkan akun untuk membuka akses aplikasi.</p>
+                    </div>
+                </div>
+            </div>
+            <form id="loginForm" class="p-6 space-y-4">
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Akun</label>
+                    <input type="text" id="loginUsername" autocomplete="username" required class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" placeholder="admin atau user">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Password</label>
+                    <input type="password" id="loginPassword" autocomplete="current-password" required class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" placeholder="Masukkan password">
+                </div>
+                <div id="loginError" class="hidden px-4 py-3 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 text-sm font-semibold">
+                    Akun atau password tidak sesuai.
+                </div>
+                <button type="submit" class="w-full px-4 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-sm shadow-brand-500/20">
+                    <i class="fas fa-right-to-bracket"></i> Masuk
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- NAVIGATION BAR -->
-    <nav class="sticky top-0 z-50 bg-white dark:bg-darkCard border-b border-slate-200 dark:border-darkBorder shadow-sm transition-colors duration-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav class="app-shell sticky top-0 z-50 bg-white dark:bg-darkCard border-b border-slate-200 dark:border-darkBorder shadow-sm transition-colors duration-200">
+        <div class="w-full max-w-none mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20 flex-wrap md:flex-nowrap gap-4">
                 <!-- Logo & Brand -->
                 <div class="flex items-center gap-3">
@@ -117,7 +275,7 @@
                     <button data-page="beranda" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition bg-brand-500 text-white shadow-sm">
                         <i class="fas fa-chart-pie"></i> Beranda
                     </button>
-                    <button data-page="master" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
+                    <button id="masterNavBtn" data-page="master" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
                         <i class="fas fa-edit"></i> Kelola Data
                     </button>
                     <button data-page="rekap" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
@@ -130,8 +288,12 @@
 
                 <!-- Utility Toggles -->
                 <div class="flex items-center gap-3">
+                    <span id="accessBadge" class="px-3 py-1.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-300 font-bold text-xs"></span>
                     <button id="themeToggle" class="p-2.5 rounded-xl border border-slate-200 dark:border-darkBorder bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-700 dark:text-slate-300">
                         <i class="fas fa-moon"></i>
+                    </button>
+                    <button id="logoutBtn" class="p-2.5 rounded-xl border border-slate-200 dark:border-darkBorder bg-slate-50 dark:bg-slate-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition text-slate-700 dark:text-slate-300" title="Keluar">
+                        <i class="fas fa-right-from-bracket"></i>
                     </button>
                 </div>
             </div>
@@ -139,7 +301,7 @@
     </nav>
 
     <!-- CONTENT WRAPPER -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="app-shell w-full max-w-none mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         <!-- Connection Banner Info (If Offline/Demo Mode) -->
         <div id="demoConnectionBanner" class="hidden mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-400 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -341,7 +503,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="space-y-2">
                                 <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                                    <i class="fas fa-file-signature"></i> Kelengkapan Dokumen / Sertifikasi
+                                    <i class="fas fa-file-signature"></i> Kelengkapan Dokumen
                                 </label>
                                 <input type="text" id="kelengkapanDokumen" placeholder="Ketik jenis kelengkapan (SHM No. X, Hibah, dll)" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
                             </div>
@@ -364,17 +526,6 @@
                                 </button>
                                 <button type="button" id="clearFormBtn" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-xl flex items-center gap-2 transition">
                                     <i class="fas fa-eraser"></i> Bersihkan
-                                </button>
-                            </div>
-                            <div class="flex flex-wrap gap-2">
-                                <button type="button" id="importExcelBtn" class="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm">
-                                    <i class="fas fa-file-import"></i> Impor XLSX
-                                </button>
-                                <button type="button" id="exportMasterExcelBtn" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm">
-                                    <i class="fas fa-file-export"></i> Ekspor Semua (.xlsx)
-                                </button>
-                                <button type="button" id="deleteAllDataBtn" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm">
-                                    <i class="fas fa-trash-alt"></i> Hapus Semua
                                 </button>
                             </div>
                         </div>
@@ -402,8 +553,18 @@
 
         <!-- ================= REKAPAN DATA / FILTER & TABLE PAGE ================= -->
         <div id="rekap" class="page-section hidden space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <button id="toggleFilterPanel" class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm shadow-brand-500/20">
+                    <i class="fas fa-filter"></i>
+                    <span id="toggleFilterText">Tampilkan Filter</span>
+                </button>
+                <button id="exportRekapBtn" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm shadow-emerald-500/20">
+                    <i class="fas fa-file-excel"></i> Ekspor Rincian (.xlsx)
+                </button>
+            </div>
+
             <!-- Advanced Filter Bar -->
-            <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm p-6">
+            <div id="filterPanel" class="hidden bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm p-6">
                 <div class="flex items-center gap-2 pb-4 mb-6 border-b border-slate-100 dark:border-darkBorder">
                     <i class="fas fa-filter text-brand-500 text-lg"></i>
                     <h3 class="text-base font-bold text-slate-900 dark:text-white">Panel Penyaring Lahan</h3>
@@ -483,7 +644,7 @@
                     </div>
                     <!-- Filter Kelengkapan Dokumen -->
                     <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sertifikat/Dokumen</label>
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Dokumen</label>
                         <input type="text" id="filterKelengkapan" placeholder="Cari: SHM, Akta, dll" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
                     </div>
                     <!-- Global Search -->
@@ -502,15 +663,12 @@
                     <button id="resetFilter" class="px-4 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition">
                         <i class="fas fa-undo"></i> Reset Semua Filter
                     </button>
-                    <button id="exportRekapBtn" class="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1.5 transition shadow-sm shadow-emerald-500/25">
-                        <i class="fas fa-file-excel"></i> Ekspor Rincian (.xlsx)
-                    </button>
                 </div>
             </div>
 
             <!-- Table Block -->
             <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm overflow-hidden">
-                <div class="overflow-x-auto w-full">
+                <div class="rekap-table-scroll w-full">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-darkBorder text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] font-bold">
@@ -524,7 +682,8 @@
                                 <th class="py-4 px-4">Zona LSD/LBS</th>
                                 <th class="py-4 px-4 text-center">Progres</th>
                                 <th class="py-4 px-4 text-center">Kelayakan</th>
-                                <th class="py-4 px-4">Sertifikat</th>
+                                <th class="py-4 px-4">Dokumen</th>
+                                <th class="py-4 px-4">Catatan</th>
                                 <th class="py-4 px-4 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -719,11 +878,11 @@
                             <span class="font-semibold" id="detailProses">-</span>
                         </div>
                         <div class="sm:col-span-2 border-b border-slate-100 dark:border-darkBorder/40 pb-2">
-                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Kelengkapan Dokumen / Sertifikat</span>
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Kelengkapan Dokumen</span>
                             <span class="font-semibold text-slate-800 dark:text-slate-200" id="detailDokumen">-</span>
                         </div>
                         <div class="sm:col-span-2 border-b border-slate-100 dark:border-darkBorder/40 pb-2">
-                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Koordinat Geografis</span>
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Koordinat</span>
                             <span class="font-mono text-slate-700 dark:text-slate-300" id="detailKoordinat">-</span>
                         </div>
                         <div class="sm:col-span-2 pb-2">
@@ -782,9 +941,9 @@
     </div>
 
     <!-- FOOTER -->
-    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-t border-slate-200 dark:border-darkBorder text-center text-xs text-slate-400 dark:text-slate-500 space-y-2">
+    <footer class="app-shell w-full max-w-none mx-auto px-4 sm:px-6 lg:px-8 py-10 border-t border-slate-200 dark:border-darkBorder text-center text-xs text-slate-400 dark:text-slate-500 space-y-2">
         <p>© 2026 Koperasi Desa Merah Putih (KDMP) Kabupaten Bima. Seluruh hak cipta dilindungi.</p>
-        <p class="font-semibold text-[10px] uppercase tracking-wider text-slate-300 dark:text-slate-600">Teknologi GIS Terpadu untuk Kesejahteraan Pertanian Indonesia</p>
+        <p class="font-semibold text-[10px] uppercase tracking-wider text-slate-300 dark:text-slate-600">Aplikasi SIG Terpadu Oleh IANZ</p>
     </footer>
 
     <!-- INTERACTION LOGIC & DATABASE ENGINE -->
@@ -833,6 +992,13 @@
         let nextId = 1;
         const STORAGE_KEY = "KDMP_BIMA_DASHBOARD_V2";
         const FIREBASE_CONFIG_KEY = "KDMP_FIREBASE_CONFIG";
+        const AUTH_SESSION_KEY = "KDMP_AUTH_SESSION";
+        const AUTH_USERS = {
+            admin: { password: "admin@123", access: "admin", label: "Admin" },
+            user: { password: "user123", access: "pengguna", label: "Pengguna" }
+        };
+        let currentUser = null;
+        let hasBootstrappedData = false;
         
         let map = null, markersLayer = null, currentTileLayer = null;
         let chartKelayakan = null, chartProses = null, chartPerbandingan = null, chartKepemilikan = null;
@@ -842,6 +1008,84 @@
         let auth = null;
         let isCloudConnected = false;
         let unsubscribeFirestore = null;
+
+        function isAdmin() {
+            return currentUser && currentUser.access === "admin";
+        }
+
+        function requireAdminAccess() {
+            if (isAdmin()) return true;
+            showToast("Akses pengguna hanya untuk melihat dan ekspor data.", "error");
+            return false;
+        }
+
+        function setAuthLocked(isLocked) {
+            document.body.classList.toggle("auth-locked", isLocked);
+        }
+
+        function applyAccessControl() {
+            const masterNav = document.getElementById("masterNavBtn");
+            const accessBadge = document.getElementById("accessBadge");
+            if (masterNav) masterNav.classList.toggle("hidden", !isAdmin());
+            if (accessBadge) accessBadge.innerText = currentUser ? `Akses: ${currentUser.label}` : "";
+            if (!isAdmin() && !document.getElementById("master").classList.contains("hidden")) {
+                triggerNavTab("beranda");
+            }
+            renderRekap();
+        }
+
+        function unlockApplication(user) {
+            currentUser = user;
+            setAuthLocked(false);
+            applyAccessControl();
+            if (!hasBootstrappedData) {
+                setTimeout(() => {
+                    loadData();
+                }, 500);
+            } else {
+                renderAll();
+            }
+        }
+
+        function initAuth() {
+            const loginForm = document.getElementById("loginForm");
+            const loginError = document.getElementById("loginError");
+            const savedSession = sessionStorage.getItem(AUTH_SESSION_KEY);
+            if (savedSession) {
+                try {
+                    const parsed = JSON.parse(savedSession);
+                    if (AUTH_USERS[parsed.username] && AUTH_USERS[parsed.username].access === parsed.access) {
+                        unlockApplication({ username: parsed.username, access: parsed.access, label: AUTH_USERS[parsed.username].label });
+                    }
+                } catch (err) {
+                    sessionStorage.removeItem(AUTH_SESSION_KEY);
+                }
+            }
+
+            loginForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const username = document.getElementById("loginUsername").value.trim();
+                const password = document.getElementById("loginPassword").value;
+                const account = AUTH_USERS[username];
+                if (!account || account.password !== password) {
+                    loginError.classList.remove("hidden");
+                    return;
+                }
+                loginError.classList.add("hidden");
+                const session = { username, access: account.access };
+                sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+                unlockApplication({ username, access: account.access, label: account.label });
+                showToast(`Login berhasil sebagai ${account.label}.`);
+            });
+
+            document.getElementById("logoutBtn").addEventListener("click", () => {
+                sessionStorage.removeItem(AUTH_SESSION_KEY);
+                currentUser = null;
+                setAuthLocked(true);
+                document.getElementById("loginPassword").value = "";
+                document.getElementById("loginUsername").focus();
+            });
+        }
 
         // Analisis kelayakan lahan otomatis
         function analisisKelayakan(item) {
@@ -891,6 +1135,7 @@
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(locations));
             }
             nextId = locations.length > 0 ? Math.max(...locations.map(l => l.id)) + 1 : 1;
+            hasBootstrappedData = true;
             
             // Perbarui UI Badge Status
             const badge = document.getElementById("cloudStatusBadge");
@@ -937,6 +1182,7 @@
                                 tempLocations.push({ id: doc.id, ...doc.data() });
                             });
                             locations = tempLocations;
+                            hasBootstrappedData = true;
                             renderAll();
                         }, (err) => {
                             console.error("Firestore Subscribe Error:", err);
@@ -1031,12 +1277,12 @@
         // Load Default Cloud Demo Config (Jika belum punya sendiri)
         window.loadDefaultConfig = function() {
             // Placeholder template KDMP
-            document.getElementById("cfg_apiKey").value = "";
-            document.getElementById("cfg_authDomain").value = "kdmp-bima.firebaseapp.com";
-            document.getElementById("cfg_projectId").value = "kdmp-bima";
-            document.getElementById("cfg_storageBucket").value = "kdmp-bima.appspot.com";
-            document.getElementById("cfg_messagingSenderId").value = "123456789";
-            document.getElementById("cfg_appId").value = "1:123456789:web:abcdef12345";
+            document.getElementById("cfg_apiKey").value = "AIzaSyCOmBD0GIxPkMRDmC1hYhW614K-zZQM_so";
+            document.getElementById("cfg_authDomain").value = "kdmpbima.firebaseapp.com";
+            document.getElementById("cfg_projectId").value = "kdmpbima";
+            document.getElementById("cfg_storageBucket").value = "kdmpbima.firebasestorage.app";
+            document.getElementById("cfg_messagingSenderId").value = "494873142775";
+            document.getElementById("cfg_appId").value = "1:494873142775:web:a3201c156696e31dd7baf2";
             showToast("Kredensial template terisi! Ganti dengan parameter Firebase asli Anda.");
         };
 
@@ -1049,12 +1295,12 @@
         };
 
         function updateConfigFormFields(config) {
-            document.getElementById("cfg_apiKey").value = config.apiKey || "";
-            document.getElementById("cfg_authDomain").value = config.authDomain || "";
-            document.getElementById("cfg_projectId").value = config.projectId || "";
-            document.getElementById("cfg_storageBucket").value = config.storageBucket || "";
-            document.getElementById("cfg_messagingSenderId").value = config.messagingSenderId || "";
-            document.getElementById("cfg_appId").value = config.appId || "";
+            document.getElementById("cfg_apiKey").value = config.apiKey || "AIzaSyCOmBD0GIxPkMRDmC1hYhW614K-zZQM_so";
+            document.getElementById("cfg_authDomain").value = config.authDomain || "kdmpbima.firebaseapp.com";
+            document.getElementById("cfg_projectId").value = config.projectId || "kdmpbima";
+            document.getElementById("cfg_storageBucket").value = config.storageBucket || "kdmpbima.firebasestorage.app";
+            document.getElementById("cfg_messagingSenderId").value = config.messagingSenderId || "494873142775";
+            document.getElementById("cfg_appId").value = config.appId || "1:494873142775:web:a3201c156696e31dd7baf2";
         }
 
         // ==================== RENDERING COMPONENT ENGINE ====================
@@ -1229,7 +1475,7 @@
                     labels: kecamatanList,
                     datasets: [
                         {
-                            label: 'Jumlah Desa (Geografis)',
+                            label: 'Jumlah Desa',
                             data: jumlahDesa,
                             backgroundColor: '#3b82f6',
                             borderRadius: 6
@@ -1340,6 +1586,13 @@
 
                 // Handle string or number for ID inside Javascript inline calls
                 const paramId = typeof item.id === 'string' ? `'${item.id}'` : item.id;
+                const manageButtons = isAdmin() ? `
+                                <button onclick="editData(${paramId})" class="p-1.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 text-amber-600 dark:text-amber-400 rounded-lg transition" title="Edit Data">
+                                    <i class="fas fa-edit text-sm"></i>
+                                </button>
+                                <button onclick="deleteData(${paramId})" class="p-1.5 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 text-rose-600 dark:text-rose-400 rounded-lg transition" title="Hapus Data">
+                                    <i class="fas fa-trash text-sm"></i>
+                                </button>` : "";
 
                 html += `
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
@@ -1353,7 +1606,8 @@
                         <td class="py-3 px-4 text-slate-500">${item.lsdStatus !== 'Tidak' ? `<span class="text-amber-500 font-bold">${item.lsdStatus}</span>` : 'Tidak'}</td>
                         <td class="py-3 px-4 text-center">${badgeProses}</td>
                         <td class="py-3 px-4 text-center">${badgeKelayakan}</td>
-                        <td class="py-3 px-4 text-slate-400 truncate max-w-[150px]" title="${item.kelengkapanDokumen || ''}">${item.kelengkapanDokumen || '-'}</td>
+                        <td class="py-3 px-4 text-slate-500 max-w-[180px] whitespace-normal" title="${item.kelengkapanDokumen || ''}">${item.kelengkapanDokumen || '-'}</td>
+                        <td class="py-3 px-4 text-slate-600 dark:text-slate-300 rekap-note-cell" title="${item.keterangan || ''}">${item.keterangan || '-'}</td>
                         <td class="py-3 px-4 text-center">
                             <div class="flex items-center justify-center gap-1.5">
                                 <button onclick="showDetail(${paramId})" class="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-lg transition" title="Lihat Detail Lengkap">
@@ -1362,19 +1616,14 @@
                                 <button onclick="viewOnMap('${item.kecamatan}','${item.desa}','${item.koordinat || ''}')" class="p-1.5 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 text-sky-600 dark:text-sky-400 rounded-lg transition" title="Lihat di Peta">
                                     <i class="fas fa-map-marked-alt text-sm"></i>
                                 </button>
-                                <button onclick="editData(${paramId})" class="p-1.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 text-amber-600 dark:text-amber-400 rounded-lg transition" title="Edit Data">
-                                    <i class="fas fa-edit text-sm"></i>
-                                </button>
-                                <button onclick="deleteData(${paramId})" class="p-1.5 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 text-rose-600 dark:text-rose-400 rounded-lg transition" title="Hapus Data">
-                                    <i class="fas fa-trash text-sm"></i>
-                                </button>
+                                ${manageButtons}
                             </div>
                         </td>
                     </tr>
                 `;
             });
 
-            tbody.innerHTML = html || `<tr><td colspan="12" class="py-8 text-center text-slate-400 dark:text-slate-500">Tidak ada data lahan yang sesuai dengan kriteria saringan.</td></tr>`;
+            tbody.innerHTML = html || `<tr><td colspan="13" class="py-8 text-center text-slate-400 dark:text-slate-500">Tidak ada data lahan yang sesuai dengan kriteria saringan.</td></tr>`;
 
             // Update stats indicators
             let layak = filtered.filter(l => analisisKelayakan(l) === "LAYAK").length;
@@ -1436,16 +1685,14 @@
                     if (statusKelayakan === "PERHATIAN") color = "#f59e0b";
                     if (statusKelayakan === "TIDAK LAYAK") color = "#ef4444";
 
-                    // Custom SVG Marker (Pulsing Effect if Active Construction)
-                    let isProses = loc.prosesBangun === "YA";
-                    let pulseHtml = isProses ? `<span class="absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75 animate-ping"></span>` : "";
-
+                    const luasText = loc.lebarDepan && loc.panjang
+                        ? `${(loc.lebarDepan * loc.panjang).toLocaleString('id-ID')} m² (${loc.lebarDepan} x ${loc.panjang} m)`
+                        : '-';
                     let customIcon = L.divIcon({
-                        className: 'relative',
+                        className: 'kdmp-static-marker',
                         html: `
-                            <div class="relative flex items-center justify-center w-6 h-6">
-                                ${pulseHtml}
-                                <span class="relative inline-flex rounded-full h-4.5 w-4.5 border-2 border-white shadow-md shadow-black/30" style="background-color: ${color}"></span>
+                            <div class="flex items-center justify-center w-6 h-6">
+                                <span class="inline-flex rounded-full w-4 h-4 border-[3px] border-white shadow-md shadow-black/30" style="background-color: ${color}"></span>
                             </div>
                         `,
                         iconSize: [24, 24]
@@ -1453,15 +1700,17 @@
 
                     L.marker(coord, { icon: customIcon })
                         .bindPopup(`
-                            <div class="text-slate-800 text-xs space-y-1">
-                                <div class="font-extrabold text-sm border-b pb-1 mb-1 text-brand-600">${loc.desa}, ${loc.kecamatan}</div>
+                            <div class="text-slate-800 text-sm space-y-1.5 min-w-[260px]">
+                                <div class="font-extrabold text-base border-b pb-1.5 mb-1.5 text-brand-600">${loc.desa}, ${loc.kecamatan}</div>
                                 <div><b>Kepemilikan:</b> ${loc.kepemilikan}</div>
-                                <div><b>Luas Lahan:</b> ${loc.lebarDepan && loc.panjang ? `${loc.lebarDepan * loc.panjang} m² (${loc.lebarDepan}x${loc.panjang})` : '-'}</div>
+                                <div><b>Luas Lahan:</b> ${luasText}</div>
                                 <div><b>Sengketa:</b> ${loc.bersengketa}</div>
                                 <div><b>Zona LSD/LBS:</b> ${loc.lsdStatus}</div>
                                 <div><b>Pembangunan:</b> ${loc.prosesBangun === 'YA' ? '<span class="text-indigo-600 font-bold">AKTIF</span>' : 'BELUM'}</div>
+                                <div><b>Dokumen:</b> ${loc.kelengkapanDokumen || '-'}</div>
+                                <div><b>Koordinat:</b> ${loc.koordinat || '-'}</div>
                                 <div class="pt-1.5 font-bold uppercase" style="color: ${color}">STATUS: ${statusKelayakan}</div>
-                                ${loc.keterangan ? `<div class="text-[10px] text-slate-500 italic mt-1">${loc.keterangan}</div>` : ''}
+                                <div class="pt-1.5 mt-1.5 border-t text-slate-600"><b>Catatan:</b> ${loc.keterangan || '-'}</div>
                             </div>
                         `)
                         .addTo(markersLayer);
@@ -1625,7 +1874,9 @@
             };
 
             const editBtn = document.getElementById("btnDetailEdit");
+            editBtn.classList.toggle("hidden", !isAdmin());
             editBtn.onclick = function() {
+                if (!requireAdminAccess()) return;
                 closeDetailModal();
                 editData(item.id);
             };
@@ -1642,6 +1893,7 @@
         
         // Hapus Data (Diganti dengan Custom Confirmation Modal yang elegan)
         window.deleteData = function(id) {
+            if (!requireAdminAccess()) return;
             let item = locations.find(l => l.id == id);
             if (!item) return;
 
@@ -1669,6 +1921,7 @@
 
         // Edit Data Setup
         window.editData = function(id) {
+            if (!requireAdminAccess()) return;
             let item = locations.find(l => l.id == id);
             if (!item) return;
 
@@ -1715,6 +1968,7 @@
         // Save Form (Create or Update)
         document.getElementById("locationForm").addEventListener("submit", async function (e) {
             e.preventDefault();
+            if (!requireAdminAccess()) return;
             let editId = document.getElementById("editIndex").value;
 
             let lVal = document.getElementById("lebar").value;
@@ -1777,7 +2031,9 @@
         document.getElementById("clearFormBtn").addEventListener("click", clearForm);
 
         // Hapus Semua Data
-        document.getElementById("deleteAllDataBtn").addEventListener("click", function() {
+        const deleteAllDataBtn = document.getElementById("deleteAllDataBtn");
+        if (deleteAllDataBtn) deleteAllDataBtn.addEventListener("click", function() {
+            if (!requireAdminAccess()) return;
             showConfirm(
                 "Peringatan Hapus Seluruh Database", 
                 "PERINGATAN! Anda akan menghapus SELURUH data lahan KDMP dari sistem penyimpanan aktif (Cloud/Lokal). Tindakan ini tidak dapat dibatalkan. Lanjutkan?", 
@@ -1807,7 +2063,9 @@
         // ==================== IMPOR & EKSPOR SYSTEM (XLSX, JSON, KML) ====================
 
         // Ekspor Semua / Excel (MANDATORY RULE: Juga disortir berdasarkan abjad kecamatan saat ekspor)
-        document.getElementById("exportMasterExcelBtn").addEventListener("click", () => {
+        const exportMasterExcelBtn = document.getElementById("exportMasterExcelBtn");
+        if (exportMasterExcelBtn) exportMasterExcelBtn.addEventListener("click", () => {
+            if (!requireAdminAccess()) return;
             let sortedLocations = [...locations];
             sortedLocations.sort((a, b) => {
                 const kecCompare = a.kecamatan.localeCompare(b.kecamatan);
@@ -1874,7 +2132,10 @@
             }
             if (search) {
                 filtered = filtered.filter(l => 
-                    l.kecamatan.toLowerCase().includes(search) || l.desa.toLowerCase().includes(search)
+                    l.kecamatan.toLowerCase().includes(search) ||
+                    l.desa.toLowerCase().includes(search) ||
+                    l.kepemilikan.toLowerCase().includes(search) ||
+                    (l.keterangan || "").toLowerCase().includes(search)
                 );
             }
 
@@ -1908,7 +2169,9 @@
         });
 
         // Impor Excel / XLSX
-        document.getElementById("importExcelBtn").addEventListener("click", () => {
+        const importExcelBtn = document.getElementById("importExcelBtn");
+        if (importExcelBtn) importExcelBtn.addEventListener("click", () => {
+            if (!requireAdminAccess()) return;
             let input = document.createElement("input");
             input.type = "file";
             input.accept = ".xlsx";
@@ -1986,10 +2249,12 @@
 
         // Restore from JSON file
         document.getElementById("restoreFromLocalBtn").addEventListener("click", () => {
+            if (!requireAdminAccess()) return;
             document.getElementById("restoreFileInput").click();
         });
 
         document.getElementById("restoreFileInput").addEventListener("change", (e) => {
+            if (!requireAdminAccess()) return;
             const file = e.target.files[0];
             if (!file) return;
 
@@ -2075,12 +2340,19 @@
         // ==================== NAVIGATION & INTERACTION ENGINE ====================
         
         function triggerNavTab(pageId) {
+            if (pageId === "master" && !isAdmin()) {
+                showToast("Menu Kelola Data hanya untuk akses admin.", "error");
+                pageId = "beranda";
+            }
             document.querySelectorAll(".nav-btn").forEach(btn => {
                 const isActive = btn.getAttribute("data-page") === pageId;
                 if (isActive) {
                     btn.className = "nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition bg-brand-500 text-white shadow-sm";
                 } else {
                     btn.className = "nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
+                }
+                if (btn.getAttribute("data-page") === "master" && !isAdmin()) {
+                    btn.classList.add("hidden");
                 }
             });
 
@@ -2167,6 +2439,23 @@
             showToast("Marka peta sebaran berhasil diperbarui!");
         });
 
+        function setFilterPanelVisible(isVisible) {
+            const panel = document.getElementById("filterPanel");
+            const text = document.getElementById("toggleFilterText");
+            const button = document.getElementById("toggleFilterPanel");
+            panel.classList.toggle("hidden", !isVisible);
+            text.innerText = isVisible ? "Sembunyikan Filter" : "Tampilkan Filter";
+            button.classList.toggle("bg-slate-600", isVisible);
+            button.classList.toggle("hover:bg-slate-700", isVisible);
+            button.classList.toggle("bg-brand-500", !isVisible);
+            button.classList.toggle("hover:bg-brand-600", !isVisible);
+        }
+
+        document.getElementById("toggleFilterPanel").addEventListener("click", () => {
+            const panel = document.getElementById("filterPanel");
+            setFilterPanelVisible(panel.classList.contains("hidden"));
+        });
+
         // Table Filter Change Listeners
         const filterIds = [
             "filterKecamatan", "filterDesa", "filterKepemilikan", "filterSengketa", 
@@ -2181,6 +2470,7 @@
         document.getElementById("resetFilter").addEventListener("click", () => {
             resetAllFilters();
             renderRekap();
+            setFilterPanelVisible(false);
             showToast("Saringan data berhasil dikosongkan!");
         });
 
@@ -2194,11 +2484,7 @@
         // ==================== SYSTEM BOOTSTRAP INIT ====================
         window.addEventListener("DOMContentLoaded", () => {
             populateFormsDropdowns();
-            
-            // Berikan jeda sejenak untuk memuat Firebase SDK secara modular
-            setTimeout(() => {
-                loadData();
-            }, 500);
+            initAuth();
         });
     </script>
 </body>
