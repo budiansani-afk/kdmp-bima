@@ -1,0 +1,2205 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>KDMP Kabupaten Bima - Aplikasi Terpadu</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff5f5',
+                            100: '#ffe3e3',
+                            500: '#e53e3e',
+                            600: '#c53030',
+                            700: '#9b2c2c',
+                        },
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b',
+                        darkBorder: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- SheetJS (xlsx) & FileSaver -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK (Modular v10+) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        window.FirebaseSDK = {
+            initializeApp, getAuth, signInAnonymously, onAuthStateChanged,
+            getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc
+        };
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        /* Map container setup */
+        #map {
+            height: 500px;
+            width: 100%;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+
+    <!-- NAVIGATION BAR -->
+    <nav class="sticky top-0 z-50 bg-white dark:bg-darkCard border-b border-slate-200 dark:border-darkBorder shadow-sm transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20 flex-wrap md:flex-nowrap gap-4">
+                <!-- Logo & Brand -->
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-brand-100 dark:bg-brand-700/20 rounded-xl flex items-center justify-center border border-brand-500/20 shadow-inner overflow-hidden">
+                        <img src="https://desatepus.gunungkidulkab.go.id/assets/files/artikel/sedang_1763294672LOGO%20KDMP.jpg" 
+                             alt="Logo KDMP" 
+                             class="w-full h-full object-cover"
+                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%23D32F2F\'/%3E%3Ctext x=\'50\' y=\'55\' text-anchor=\'middle\' fill=\'white\' font-size=\'14\' font-weight=\'bold\'%3EKDMP%3C/text%3E%3C/svg%3E';">
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-brand-500 dark:text-brand-100">Sistem Informasi</span>
+                            <!-- Cloud Status Indicator -->
+                            <span id="cloudStatusBadge" class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse"></span> Mendeteksi...
+                            </span>
+                        </div>
+                        <h1 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">KDMP Kabupaten Bima</h1>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-xl">
+                    <button data-page="beranda" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition bg-brand-500 text-white shadow-sm">
+                        <i class="fas fa-chart-pie"></i> Beranda
+                    </button>
+                    <button data-page="master" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
+                        <i class="fas fa-edit"></i> Kelola Data
+                    </button>
+                    <button data-page="rekap" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
+                        <i class="fas fa-list-ol"></i> Rekapan
+                    </button>
+                    <button data-page="peta" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
+                        <i class="fas fa-map-marked-alt"></i> Peta Sebaran
+                    </button>
+                </div>
+
+                <!-- Utility Toggles -->
+                <div class="flex items-center gap-3">
+                    <button id="themeToggle" class="p-2.5 rounded-xl border border-slate-200 dark:border-darkBorder bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-700 dark:text-slate-300">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENT WRAPPER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Connection Banner Info (If Offline/Demo Mode) -->
+        <div id="demoConnectionBanner" class="hidden mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-400 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+                <i class="fas fa-wifi-slash text-base"></i>
+                <div>
+                    <span class="font-bold block">Mode Demonstrasi Aktif (Penyimpanan Lokal)</span>
+                    <span>Aplikasi saat ini menyimpan data di browser Anda. Untuk mengaktifkan sinkronisasi online bersama staf lain, hubungkan kredensial Cloud Database Anda.</span>
+                </div>
+            </div>
+            <button onclick="openConfigModal()" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition">
+                <i class="fas fa-plug mr-1"></i> Hubungkan Online
+            </button>
+        </div>
+
+        <!-- ================= BERANDA PAGE ================= -->
+        <div id="beranda" class="page-section space-y-8">
+            <!-- Stats Counters -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="statsContainer">
+                <!-- Dynamically Populated -->
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Chart Kelayakan -->
+                <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4"><i class="fas fa-chart-donut mr-2"></i>Persentase Kelayakan</h3>
+                    <div class="relative flex justify-center items-center h-64">
+                        <canvas id="chartKelayakan"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart Pembangunan -->
+                <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4"><i class="fas fa-tasks mr-2"></i>Proses Pembangunan</h3>
+                    <div class="relative flex justify-center items-center h-64">
+                        <canvas id="chartProses"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart Kepemilikan Lahan -->
+                <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4"><i class="fas fa-landmark mr-2"></i>Status Kepemilikan</h3>
+                    <div class="relative flex justify-center items-center h-64">
+                        <canvas id="chartKepemilikan"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Big Chart (Desa vs Lahan per Kecamatan) -->
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider"><i class="fas fa-chart-bar mr-2"></i>Jumlah Desa & Lahan Terdata per Kecamatan</h3>
+                </div>
+                <div class="relative h-96">
+                    <canvas id="chartPerbandingan"></canvas>
+                </div>
+            </div>
+
+            <!-- Interactive Categories Quick Filter -->
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm">
+                <h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4"><i class="fas fa-tags mr-2"></i>Kategori Lahan Terdata (Klik untuk melihat rincian)</h3>
+                <div id="kategoriList" class="flex flex-wrap gap-2">
+                    <!-- Dynamically Populated -->
+                </div>
+            </div>
+
+            <!-- Guidelines Panel -->
+            <div class="bg-slate-100 dark:bg-slate-800/40 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                <div>
+                    <h4 class="text-base font-bold text-slate-900 dark:text-white mb-1">Pedoman Klasifikasi Kelayakan Lahan</h4>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 max-w-2xl">Penetapan status kelayakan didasarkan pada luas total lahan (minimal 600m²), ketiadaan sengketa hukum, serta status bebas dari zona Lindung / Sawah Dilindungi (LSD/LBS).</p>
+                </div>
+                <div class="flex gap-4 flex-wrap">
+                    <div class="flex items-center gap-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-semibold">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> LAYAK
+                    </div>
+                    <div class="flex items-center gap-2 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> PERHATIAN
+                    </div>
+                    <div class="flex items-center gap-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 px-3 py-1.5 rounded-lg text-xs font-semibold">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> TIDAK LAYAK
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= MASTER DATA / KELOLA DATA PAGE ================= -->
+        <div id="master" class="page-section hidden space-y-8">
+            <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm overflow-hidden">
+                <div class="border-b border-slate-100 dark:border-darkBorder bg-slate-50 dark:bg-slate-800/40 px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white shadow-sm">
+                            <i class="fas fa-edit text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white" id="formStatus">Form Entri Lokasi Baru</h2>
+                            <p class="text-xs text-slate-400 dark:text-slate-500">Isi data di bawah ini untuk menambahkan atau memperbarui data sebaran lahan KDMP</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <form id="locationForm" class="space-y-6">
+                        <input type="hidden" id="editIndex" value="-1">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Kecamatan -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-city"></i> Kecamatan <span class="text-brand-500">*</span>
+                                </label>
+                                <select id="kecamatan" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                                    <option value="">Pilih Kecamatan</option>
+                                </select>
+                            </div>
+
+                            <!-- Desa -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-tree"></i> Desa / Kelurahan <span class="text-brand-500">*</span>
+                                </label>
+                                <select id="desa" required disabled class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none disabled:opacity-50">
+                                    <option value="">Pilih Kecamatan dulu</option>
+                                </select>
+                            </div>
+
+                            <!-- Kepemilikan Lahan -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-landmark"></i> Kepemilikan Lahan
+                                </label>
+                                <select id="kepemilikan" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                                    <!-- Populated in JS -->
+                                </select>
+                            </div>
+
+                            <!-- Bersengketa -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-gavel"></i> Status Bersengketa
+                                </label>
+                                <select id="sengketa" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                                    <option value="Tidak">Tidak</option>
+                                    <option value="Ya">Ya (Sedang Sengketa)</option>
+                                </select>
+                            </div>
+
+                            <!-- Lebar Depan -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-ruler-horizontal"></i> Lebar Depan (meter)
+                                </label>
+                                <input type="number" id="lebar" step="0.1" placeholder="Masukkan angka lebar" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                            </div>
+
+                            <!-- Panjang Kebelakang -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-ruler-vertical"></i> Panjang Kebelakang (meter)
+                                </label>
+                                <input type="number" id="panjang" step="0.1" placeholder="Masukkan angka panjang" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                            </div>
+
+                            <!-- LSD/LBS Status -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-exclamation-triangle"></i> Status LSD / LBS / LP2B
+                                </label>
+                                <select id="lsd" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                                    <option value="Tidak">Tidak Ada Kendala Zona</option>
+                                    <option value="LSD">Lahan Sawah Dilindungi (LSD)</option>
+                                    <option value="LBS">Lahan Baku Sawah (LBS)</option>
+                                    <option value="LSD/LBS">LSD & LBS</option>
+                                    <option value="LP2B">Lahan Pertanian Pangan Berkelanjutan (LP2B)</option>
+                                </select>
+                            </div>
+
+                            <!-- Pembangunan -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-building"></i> Proses Pembangunan
+                                </label>
+                                <select id="prosesBangun" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                                    <option value="TIDAK">Belum Proses (TIDAK)</option>
+                                    <option value="YA">Dalam Pembangunan (YA)</option>
+                                </select>
+                            </div>
+
+                            <!-- Koordinat -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-map-pin"></i> Titik Koordinat (Lat, Lng)
+                                </label>
+                                <input type="text" id="koordinat" placeholder="Contoh: -8.4590, 118.7245" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Dokumen & Keterangan -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-file-signature"></i> Kelengkapan Dokumen / Sertifikasi
+                                </label>
+                                <input type="text" id="kelengkapanDokumen" placeholder="Ketik jenis kelengkapan (SHM No. X, Hibah, dll)" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fas fa-info-circle"></i> Catatan Khusus / Keterangan Tambahan
+                                </label>
+                                <textarea id="keterangan" rows="1" placeholder="Masukkan rincian tambahan..." class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none resize-y min-h-[46px]"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons Form -->
+                        <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-darkBorder">
+                            <div class="flex flex-wrap gap-2">
+                                <button type="submit" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-md shadow-brand-500/20">
+                                    <i class="fas fa-save"></i> Simpan Data Lahan
+                                </button>
+                                <button type="button" id="cancelEditBtn" class="hidden px-5 py-2.5 bg-slate-500 hover:bg-slate-600 text-white font-semibold rounded-xl flex items-center gap-2 transition shadow-sm">
+                                    <i class="fas fa-times"></i> Batal Edit
+                                </button>
+                                <button type="button" id="clearFormBtn" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-xl flex items-center gap-2 transition">
+                                    <i class="fas fa-eraser"></i> Bersihkan
+                                </button>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" id="importExcelBtn" class="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm">
+                                    <i class="fas fa-file-import"></i> Impor XLSX
+                                </button>
+                                <button type="button" id="exportMasterExcelBtn" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm">
+                                    <i class="fas fa-file-export"></i> Ekspor Semua (.xlsx)
+                                </button>
+                                <button type="button" id="deleteAllDataBtn" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm">
+                                    <i class="fas fa-trash-alt"></i> Hapus Semua
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- JSON Backup / Restore Panel -->
+            <div class="bg-slate-50 dark:bg-slate-800/40 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                <div class="space-y-1">
+                    <h4 class="text-base font-bold text-slate-900 dark:text-white"><i class="fas fa-shield-halved mr-2 text-brand-500"></i>Cadangan Mandiri & Pemulihan Sistem</h4>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Unduh seluruh rekaman database dalam format terenkripsi JSON terpadu atau pulihkan data dari cadangan lama.</p>
+                </div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button id="backupToLocalBtn" class="flex-1 md:flex-initial px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 transition">
+                        <i class="fas fa-download"></i> Unduh JSON
+                    </button>
+                    <button id="restoreFromLocalBtn" class="flex-1 md:flex-initial px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 transition">
+                        <i class="fas fa-upload"></i> Pulihkan JSON
+                    </button>
+                    <input type="file" id="restoreFileInput" accept=".json" class="hidden">
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= REKAPAN DATA / FILTER & TABLE PAGE ================= -->
+        <div id="rekap" class="page-section hidden space-y-6">
+            <!-- Advanced Filter Bar -->
+            <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm p-6">
+                <div class="flex items-center gap-2 pb-4 mb-6 border-b border-slate-100 dark:border-darkBorder">
+                    <i class="fas fa-filter text-brand-500 text-lg"></i>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Panel Penyaring Lahan</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Filter Kecamatan -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Kecamatan</label>
+                        <select id="filterKecamatan" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                            <option value="">Semua Kecamatan</option>
+                        </select>
+                    </div>
+                    <!-- Filter Desa -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Desa</label>
+                        <select id="filterDesa" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                            <option value="">Semua Desa</option>
+                        </select>
+                    </div>
+                    <!-- Filter Kepemilikan -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Kepemilikan</label>
+                        <select id="filterKepemilikan" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                            <option value="">Semua Kepemilikan</option>
+                        </select>
+                    </div>
+                    <!-- Filter Sengketa -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sengketa</label>
+                        <select id="filterSengketa" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                            <option value="">Semua Status</option>
+                            <option value="Tidak">Bebas Sengketa</option>
+                            <option value="Ya">Sedang Sengketa</option>
+                        </select>
+                    </div>
+                    <!-- Filter Dimensi Lebar -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Lebar Depan (min, max)</label>
+                        <input type="text" id="filterLebar" placeholder="Contoh: 10, 40" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                    </div>
+                    <!-- Filter Dimensi Panjang -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Panjang (min, max)</label>
+                        <input type="text" id="filterPanjang" placeholder="Contoh: 20, 50" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                    </div>
+                    <!-- Filter LSD -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Zona LSD / LBS</label>
+                        <select id="filterLSD" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                            <option value="">Semua Zona</option>
+                            <option value="Tidak">Bebas LSD/LBS</option>
+                            <option value="LSD">Zona LSD</option>
+                            <option value="LBS">Zona LBS</option>
+                            <option value="LSD/LBS">Zona LSD/LBS</option>
+                            <option value="LP2B">Zona LP2B</option>
+                        </select>
+                    </div>
+                    <!-- Filter Proses -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pembangunan</label>
+                        <select id="filterProses" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                            <option value="">Semua Progress</option>
+                            <option value="YA">Pembangunan Aktif</option>
+                            <option value="TIDAK">Belum Mulai</option>
+                        </select>
+                    </div>
+                    <!-- Filter Kelayakan -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Kelas Kelayakan</label>
+                        <select id="filterKelayakan" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                            <option value="">Semua Kelas</option>
+                            <option value="LAYAK">LAYAK</option>
+                            <option value="PERHATIAN">PERHATIAN</option>
+                            <option value="TIDAK LAYAK">TIDAK LAYAK</option>
+                        </select>
+                    </div>
+                    <!-- Filter Kelengkapan Dokumen -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sertifikat/Dokumen</label>
+                        <input type="text" id="filterKelengkapan" placeholder="Cari: SHM, Akta, dll" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                    </div>
+                    <!-- Global Search -->
+                    <div class="space-y-1 md:col-span-2">
+                        <label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pencarian Universal</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" id="filterText" placeholder="Masukkan kata kunci umum (nama desa, catatan)..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-slate-100 dark:border-darkBorder">
+                    <button id="resetFilter" class="px-4 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition">
+                        <i class="fas fa-undo"></i> Reset Semua Filter
+                    </button>
+                    <button id="exportRekapBtn" class="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1.5 transition shadow-sm shadow-emerald-500/25">
+                        <i class="fas fa-file-excel"></i> Ekspor Rincian (.xlsx)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Block -->
+            <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm overflow-hidden">
+                <div class="overflow-x-auto w-full">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-darkBorder text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+                                <th class="py-4 px-4 text-center">No</th>
+                                <th class="py-4 px-4">Kecamatan</th>
+                                <th class="py-4 px-4">Desa</th>
+                                <th class="py-4 px-4">Kepemilikan</th>
+                                <th class="py-4 px-4 text-center">Sengketa</th>
+                                <th class="py-4 px-4 text-center">L (m)</th>
+                                <th class="py-4 px-4 text-center">P (m)</th>
+                                <th class="py-4 px-4">Zona LSD/LBS</th>
+                                <th class="py-4 px-4 text-center">Progres</th>
+                                <th class="py-4 px-4 text-center">Kelayakan</th>
+                                <th class="py-4 px-4">Sertifikat</th>
+                                <th class="py-4 px-4 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rekapBody" class="divide-y divide-slate-100 dark:divide-darkBorder text-xs">
+                            <!-- Dynamically Populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Statistics Table Footer Summary -->
+            <div class="bg-slate-100 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-darkBorder flex flex-wrap justify-between items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <div class="flex items-center gap-1.5">
+                    <i class="fas fa-layer-group text-brand-500"></i> Total Sesuai Saringan: <span id="totalCount" class="font-bold text-slate-900 dark:text-white">0</span> Lokasi
+                </div>
+                <div class="flex gap-4 flex-wrap">
+                    <div class="flex items-center gap-1">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Layak: <span id="layakCount" class="font-bold text-slate-900 dark:text-white">0</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Perhatian: <span id="perhatianCount" class="font-bold text-slate-900 dark:text-white">0</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Tidak Layak: <span id="tidakLayakCount" class="font-bold text-slate-900 dark:text-white">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PETA SEBARAN PAGE ================= -->
+        <div id="peta" class="page-section hidden space-y-6">
+            <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm overflow-hidden">
+                <div class="p-6">
+                    <!-- Map Box -->
+                    <div id="map" class="rounded-xl overflow-hidden shadow-inner border border-slate-100 dark:border-darkBorder"></div>
+
+                    <!-- Map Actions -->
+                    <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-6 border-t border-slate-100 dark:border-darkBorder">
+                        <div class="flex flex-wrap gap-2">
+                            <button id="satelliteLabelBtn" class="px-4 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition">
+                                <i class="fas fa-satellite"></i> Citra & Label
+                            </button>
+                            <button id="satelliteOnlyBtn" class="px-4 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition">
+                                <i class="fas fa-images"></i> Hanya Citra Satelit
+                            </button>
+                            <button id="resetViewBtn" class="px-4 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition">
+                                <i class="fas fa-crosshairs"></i> Reset Fokus Bima
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="refreshMapBtn" class="px-4 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition">
+                                <i class="fas fa-sync-alt"></i> Refresh Marka
+                            </button>
+                            <button id="exportKmlBtn" class="px-4 py-2 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg flex items-center gap-1.5 transition shadow-sm">
+                                <i class="fas fa-earth-asia"></i> Ekspor KML (Google Earth)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= DATABASE CONFIGURATION MODAL (NEW) ================= -->
+    <div id="configModal" class="fixed inset-0 z-[120] hidden overflow-y-auto" aria-labelledby="config-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 transition-opacity" aria-hidden="true" onclick="closeConfigModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-darkCard rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-100 dark:border-darkBorder">
+                <div class="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-b border-slate-100 dark:border-darkBorder flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-brand-500">
+                        <i class="fas fa-plug text-xl"></i>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white">Koneksi Database Online</h3>
+                    </div>
+                    <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+                <form id="configForm" class="p-6 space-y-4 text-xs">
+                    <p class="text-slate-500 dark:text-slate-400">Masukkan konfigurasi aplikasi Google Firebase Anda di bawah ini untuk mengaktifkan sinkronisasi online instan.</p>
+                    
+                    <div class="space-y-1">
+                        <label class="font-bold text-slate-500 dark:text-slate-400">API KEY</label>
+                        <input type="text" id="cfg_apiKey" required placeholder="AIzaSy..." class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="font-bold text-slate-500 dark:text-slate-400">AUTH DOMAIN</label>
+                            <input type="text" id="cfg_authDomain" required placeholder="project-id.firebaseapp.com" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-bold text-slate-500 dark:text-slate-400">PROJECT ID</label>
+                            <input type="text" id="cfg_projectId" required placeholder="project-id" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="font-bold text-slate-500 dark:text-slate-400">STORAGE BUCKET</label>
+                        <input type="text" id="cfg_storageBucket" required placeholder="project-id.appspot.com" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="font-bold text-slate-500 dark:text-slate-400">MESSAGING SENDER ID</label>
+                            <input type="text" id="cfg_messagingSenderId" required placeholder="8921832..." class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-bold text-slate-500 dark:text-slate-400">APP ID</label>
+                            <input type="text" id="cfg_appId" required placeholder="1:89218:web:a12b..." class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none">
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 dark:border-darkBorder flex justify-between gap-2">
+                        <button type="button" onclick="loadDefaultConfig()" class="px-4 py-2 font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl transition">
+                            Gunakan Default Cloud KDMP
+                        </button>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="disconnectCloud()" class="px-4 py-2 font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl transition">
+                                Putuskan Cloud
+                            </button>
+                            <button type="submit" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition">
+                                Hubungkan Database
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL DETAIL LAHAN ================= -->
+    <div id="detailModal" class="fixed inset-0 z-[100] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 transition-opacity" aria-hidden="true" onclick="closeDetailModal()"></div>
+
+            <!-- Trick to center the modal content -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <!-- Modal Panel -->
+            <div class="inline-block align-bottom bg-white dark:bg-darkCard rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-slate-100 dark:border-darkBorder">
+                <div class="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-b border-slate-100 dark:border-darkBorder flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-brand-500">
+                        <i class="fas fa-info-circle text-xl"></i>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white" id="detailModalTitle">Informasi Rinci Lahan</h3>
+                    </div>
+                    <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+                
+                <div class="px-6 py-6 space-y-6">
+                    <!-- Status Header Banner -->
+                    <div id="detailStatusBanner" class="p-4 rounded-2xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider opacity-70">Kelayakan Lahan</span>
+                            <div class="text-lg font-black tracking-wide" id="detailStatusText">-</div>
+                        </div>
+                        <div id="detailStatusIcon" class="text-2xl"></div>
+                    </div>
+
+                    <!-- Details Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-xs">
+                        <div class="border-b border-slate-100 dark:border-darkBorder/40 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Kecamatan</span>
+                            <span class="font-bold text-sm text-slate-900 dark:text-white" id="detailKecamatan">-</span>
+                        </div>
+                        <div class="border-b border-slate-100 dark:border-darkBorder/40 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Desa / Kelurahan</span>
+                            <span class="font-bold text-sm text-slate-900 dark:text-white" id="detailDesa">-</span>
+                        </div>
+                        <div class="border-b border-slate-100 dark:border-darkBorder/40 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Kepemilikan Lahan</span>
+                            <span class="font-semibold text-slate-800 dark:text-slate-200" id="detailKepemilikan">-</span>
+                        </div>
+                        <div class="border-b border-slate-100 dark:border-darkBorder/40 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Status Sengketa</span>
+                            <span class="font-semibold" id="detailSengketa">-</span>
+                        </div>
+                        <div class="border-b border-slate-100 dark:border-darkBorder/40 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Dimensi Lebar x Panjang</span>
+                            <span class="font-semibold text-slate-800 dark:text-slate-200" id="detailDimensi">-</span>
+                        </div>
+                        <div class="border-b border-slate-100 dark:border-darkBorder/40 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Luas Total</span>
+                            <span class="font-semibold text-slate-800 dark:text-slate-200" id="detailLuas">-</span>
+                        </div>
+                        <div class="border-b border-slate-100 dark:border-darkBorder/40 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Zona LSD / LBS / LP2B</span>
+                            <span class="font-semibold" id="detailLsd">-</span>
+                        </div>
+                        <div class="border-b border-slate-100 dark:border-darkBorder/40 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Proses Pembangunan</span>
+                            <span class="font-semibold" id="detailProses">-</span>
+                        </div>
+                        <div class="sm:col-span-2 border-b border-slate-100 dark:border-darkBorder/40 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Kelengkapan Dokumen / Sertifikat</span>
+                            <span class="font-semibold text-slate-800 dark:text-slate-200" id="detailDokumen">-</span>
+                        </div>
+                        <div class="sm:col-span-2 border-b border-slate-100 dark:border-darkBorder/40 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Koordinat Geografis</span>
+                            <span class="font-mono text-slate-700 dark:text-slate-300" id="detailKoordinat">-</span>
+                        </div>
+                        <div class="sm:col-span-2 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[10px]">Catatan / Keterangan</span>
+                            <p class="text-slate-600 dark:text-slate-350 italic mt-1" id="detailKeterangan">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-t border-slate-100 dark:border-darkBorder flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex gap-2">
+                        <button id="btnDetailMap" class="px-4 py-2 text-xs font-bold bg-sky-500 hover:bg-sky-600 text-white rounded-xl flex items-center gap-1.5 transition">
+                            <i class="fas fa-map-marked-alt"></i> Tunjukkan di Peta
+                        </button>
+                        <button id="btnDetailEdit" class="px-4 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl flex items-center gap-1.5 transition">
+                            <i class="fas fa-edit"></i> Edit Lahan
+                        </button>
+                    </div>
+                    <button onclick="closeDetailModal()" class="px-4 py-2 text-xs font-semibold bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl transition">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= CUSTOM CONFIRMATION MODAL ================= -->
+    <div id="confirmModal" class="fixed inset-0 z-[110] hidden overflow-y-auto" aria-labelledby="confirm-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-900/65 dark:bg-slate-900/85 transition-opacity" aria-hidden="true" onclick="closeConfirmModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-darkCard rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-slate-100 dark:border-darkBorder">
+                <div class="p-6">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-exclamation-triangle text-lg"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-base leading-6 font-bold text-slate-900 dark:text-white" id="confirmTitle">Konfirmasi Tindakan</h3>
+                            <div class="mt-2">
+                                <p class="text-xs text-slate-500 dark:text-slate-400" id="confirmMessage">Apakah Anda yakin dengan tindakan ini?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-t border-slate-100 dark:border-darkBorder flex justify-end gap-2">
+                    <button onclick="closeConfirmModal()" class="px-4 py-2 text-xs font-semibold bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl transition">
+                        Batal
+                    </button>
+                    <button id="btnConfirmYes" class="px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition">
+                        Ya, Lanjutkan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-t border-slate-200 dark:border-darkBorder text-center text-xs text-slate-400 dark:text-slate-500 space-y-2">
+        <p>© 2026 Koperasi Desa Merah Putih (KDMP) Kabupaten Bima. Seluruh hak cipta dilindungi.</p>
+        <p class="font-semibold text-[10px] uppercase tracking-wider text-slate-300 dark:text-slate-600">Teknologi GIS Terpadu untuk Kesejahteraan Pertanian Indonesia</p>
+    </footer>
+
+    <!-- INTERACTION LOGIC & DATABASE ENGINE -->
+    <script>
+        // ==================== DAFTAR KECAMATAN & DESA KABUPATEN BIMA ====================
+        const kecamatanDesaData = {
+            "Ambalawi": ["Kole","Mawu","Nipa","Rite","Talapiti","Tolowata"],
+            "Belo": ["Diha","Cenggu","Lido","Ncera","Ngali","Renda","Roka","Runggu","Soki"],
+            "Bolo": ["Bontokape","Darussalam","Kananga","Kara","Leu","Nggembe","Rada","Rasabau","Rato","Sanolo","Sondosia","Tambe","Timu","Tumpu"],
+            "Donggo": ["Bumi Pajo","Doridungga","Kala","Mbawa","Mpili","Ndano Na'e","O'o","Palama","Rora"],
+            "Lambitu": ["Kaboro","Kaowa","Kuta","Londu","Sambori","Teta"],
+            "Lambu": ["Hidirasa","Kaleo","Lambu","Lanta","Lanta Barat","Mangge","Melayu","Monta Baru","Nggelu","Rato","Sangga","Simpasai","Soro","Sumi"],
+            "Langgudu": ["Doro O'o","Dumu","Kalodu","Kangga","Karampi","Karumbu","Kawuwu","Laju","Pusu","Rompo","Rupe","Sambane","Sarae Ruma","Wadu Ruka","Waworada"],
+            "Madapangga": ["Bolo","Campa","Dena","Mandawau","Monggo","Mpuri","Ncandi","Ndano","Rade","Tonda","Woro"],
+            "Monta": ["Baralau","Monta","Nontotera","Pela","Sekuru","Sie","Simpasai","Sondo","Tangga","Tangga Baru","Tolotangga","Tolouwi","Waro","Willamaci"],
+            "Palibelo": ["Belo","Bre","Dore","Nata","Ntonggu","Panda","Padolo","Ragi","Roi","Teke","Tolongondoa","Tonggorisa"],
+            "Parado": ["Kanca","Kuta","Lere","Paradorato","Paradowane"],
+            "Sanggar": ["Boro","Kore","Oi Saro","Piong","Sandue","Taloko"],
+            "Sape": ["Bajo Pulau","Boke","Bugis","Buncu","Jia","Kowo","Lamere","Nae","Naru Barat","Naru Timur","Oi Maci","Parangina","Poja","Rai Oi","Rasabou","Sangia","Sari","Tanah Putih"],
+            "Soromandi": ["Bajo","Kananta","Lewintana","Punti","Sai","Sampungu","Wadukopa"],
+            "Tambora": ["Kawinda Nae","Kawinda Toi","Labuhan Kananga","Oi Bura","Oi Katupa","Oi Panihi","Rasabou"],
+            "Wawo": ["Kambilo","Kombo","Maria","Maria Utara","Ntori","Pesa","Raba","Riamau","Tarlawi"],
+            "Wera": ["Bala","Hidirasa","Kalajena","Mandala","Nanga Wera","Ntoke","Nunggi","Oitui","Pai","Ranggasolo","Sangiang","Tadewa","Tawali","Wora"],
+            "Woha": ["Dadibou","Donggobolo","Kalampa","Keli","Naru","Nisa","Pandai","Penapali","Rabakodo","Risa","Samili","Talabiu","Tenga","Tente","Waduwani"]
+        };
+
+        const daftarKepemilikanLahan = [
+            "Lahan Desa", "Lahan Pemda", "Lahan Provinsi", "Lahan Masyarakat", 
+            "Lahan Desa/ Lahan Masyarakat", "Lahan Desa/ Lahan Pemda", "Lahan Masyarakat/ Lahan Pemda", 
+            "Lahan KUD", "Barang Milik Negara", "Lahan Yayasan", "Tidak Ada Lokasi"
+        ];
+
+        // ==================== MOCK DATA SEBAGAI DATA AWAL SELEKTIF ====================
+        const initialMockData = [
+            { id: 1, kecamatan: "Woha", desa: "Tente", kepemilikan: "Lahan Desa", bersengketa: "Tidak", lebarDepan: 40, panjang: 25, lsdStatus: "Tidak", prosesBangun: "YA", koordinat: "-8.51342, 118.72314", kelengkapanDokumen: "SHM No. 44521", keterangan: "Dekat jalan raya utama Woha" },
+            { id: 2, kecamatan: "Bolo", desa: "Sondosia", kepemilikan: "Lahan Pemda", bersengketa: "Tidak", lebarDepan: 35, panjang: 20, lsdStatus: "Tidak", prosesBangun: "TIDAK", koordinat: "-8.44872, 118.66511", kelengkapanDokumen: "Sertifikat HP No. 12", keterangan: "Lahan strategis rata siap bangun" },
+            { id: 3, kecamatan: "Sape", desa: "Naru Barat", kepemilikan: "Lahan Masyarakat", bersengketa: "Tidak", lebarDepan: 30, panjang: 30, lsdStatus: "Tidak", prosesBangun: "YA", koordinat: "-8.56841, 118.98921", kelengkapanDokumen: "SHM No. 9021", keterangan: "Fasilitas pengering gabah terpadu" },
+            { id: 4, kecamatan: "Monta", desa: "Sie", kepemilikan: "Lahan Desa", bersengketa: "Ya", lebarDepan: 25, panjang: 15, lsdStatus: "Tidak", prosesBangun: "TIDAK", koordinat: "-8.61214, 118.70512", kelengkapanDokumen: "Dokumen Hibah", keterangan: "Sedang dalam tahap mediasi batas lahan" },
+            { id: 5, kecamatan: "Wawo", desa: "Maria", kepemilikan: "Lahan Desa/ Lahan Masyarakat", bersengketa: "Tidak", lebarDepan: 50, panjang: 40, lsdStatus: "LSD", prosesBangun: "TIDAK", koordinat: "-8.49012, 118.81052", kelengkapanDokumen: "Sertifikat Adat/ Letter C", keterangan: "Berada dalam zona sawah terlindung daerah perbukitan" },
+            { id: 6, kecamatan: "Wera", desa: "Tawali", kepemilikan: "Lahan KUD", bersengketa: "Tidak", lebarDepan: 20, panjang: 15, lsdStatus: "Tidak", prosesBangun: "TIDAK", koordinat: "-8.32451, 118.91021", kelengkapanDokumen: "Sertifikat KUD No. 104", keterangan: "Perbaikan eks-gudang KUD lama" },
+            { id: 7, kecamatan: "Madapangga", desa: "Bolo", kepemilikan: "Tidak Ada Lokasi", bersengketa: "Tidak", lebarDepan: null, panjang: null, lsdStatus: "Tidak", prosesBangun: "TIDAK", koordinat: "", kelengkapanDokumen: "", keterangan: "Lokasi tidak ditemukan/tidak valid" }
+        ];
+
+        // ==================== CORE STATE MANAGEMENT ====================
+        let locations = [];
+        let nextId = 1;
+        const STORAGE_KEY = "KDMP_BIMA_DASHBOARD_V2";
+        const FIREBASE_CONFIG_KEY = "KDMP_FIREBASE_CONFIG";
+        
+        let map = null, markersLayer = null, currentTileLayer = null;
+        let chartKelayakan = null, chartProses = null, chartPerbandingan = null, chartKepemilikan = null;
+
+        // Firebase Service Instances
+        let db = null;
+        let auth = null;
+        let isCloudConnected = false;
+        let unsubscribeFirestore = null;
+
+        // Analisis kelayakan lahan otomatis
+        function analisisKelayakan(item) {
+            if (item.kepemilikan === "Tidak Ada Lokasi") return "TIDAK LAYAK";
+            if (item.bersengketa === "Ya") return "PERHATIAN";
+            if (item.lsdStatus && item.lsdStatus !== "Tidak") return "PERHATIAN";
+            let l = item.lebarDepan || 0, p = item.panjang || 0;
+            if (l >= 30 && p >= 20 && (l * p) >= 600) return "LAYAK";
+            return "PERHATIAN";
+        }
+
+        // Muat Data (Inisialisasi Koneksi Hybrid)
+        async function loadData() {
+            const savedConfig = localStorage.getItem(FIREBASE_CONFIG_KEY);
+            if (savedConfig) {
+                try {
+                    const config = JSON.parse(savedConfig);
+                    updateConfigFormFields(config);
+                    await connectToFirebase(config);
+                    return;
+                } catch (err) {
+                    console.error("Firebase Connection Error on Load:", err);
+                    showToast("Gagal menyambung otomatis ke Cloud Database!", "error");
+                }
+            }
+            
+            // Fallback ke penyimpanan lokal / mode demo
+            useLocalMode();
+        }
+
+        function useLocalMode() {
+            isCloudConnected = false;
+            db = null;
+            auth = null;
+            
+            // Batalkan listener Firestore jika ada
+            if (unsubscribeFirestore) {
+                unsubscribeFirestore();
+                unsubscribeFirestore = null;
+            }
+
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                locations = JSON.parse(saved);
+            } else {
+                locations = initialMockData;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(locations));
+            }
+            nextId = locations.length > 0 ? Math.max(...locations.map(l => l.id)) + 1 : 1;
+            
+            // Perbarui UI Badge Status
+            const badge = document.getElementById("cloudStatusBadge");
+            badge.className = "px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/15 text-amber-600 flex items-center gap-1";
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Mode Lokal (Demo)`;
+
+            document.getElementById("demoConnectionBanner").classList.remove("hidden");
+            renderAll();
+        }
+
+        async function connectToFirebase(config) {
+            try {
+                if (!window.FirebaseSDK) {
+                    throw new Error("SDK Firebase tidak termuat!");
+                }
+                
+                const { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, getFirestore, collection, query, onSnapshot } = window.FirebaseSDK;
+                
+                // Mencegah inisialisasi ulang jika app sudah ada
+                const app = initializeApp(config);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                const badge = document.getElementById("cloudStatusBadge");
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span> Menyambungkan...`;
+
+                // Otentikasi sebelum memanggil database (Sesuai Aturan Firestore)
+                await signInAnonymously(auth);
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        isCloudConnected = true;
+                        document.getElementById("demoConnectionBanner").classList.add("hidden");
+                        
+                        // Set badge ke Online
+                        badge.className = "px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-600 flex items-center gap-1";
+                        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud Online`;
+                        
+                        // Hubungkan Listener Real-Time dari Firestore
+                        const q = query(collection(db, "lahan_kdmp"));
+                        unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+                            let tempLocations = [];
+                            snapshot.forEach((doc) => {
+                                tempLocations.push({ id: doc.id, ...doc.data() });
+                            });
+                            locations = tempLocations;
+                            renderAll();
+                        }, (err) => {
+                            console.error("Firestore Subscribe Error:", err);
+                            showToast("Gagal membaca pembaruan cloud!", "error");
+                        });
+
+                        showToast("Koneksi Cloud Database Aktif!", "success");
+                    } else {
+                        useLocalMode();
+                    }
+                });
+
+            } catch (err) {
+                console.error("Firebase Integration Error:", err);
+                showToast("Konfigurasi Cloud salah atau server menolak!", "error");
+                useLocalMode();
+            }
+        }
+
+        function saveToLocal() {
+            if (!isCloudConnected) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(locations));
+            }
+        }
+
+        // Toast Notification System
+        function showToast(message, type = 'success') {
+            const toast = document.createElement("div");
+            toast.className = `fixed bottom-5 right-5 z-[9999] px-5 py-3 rounded-xl text-white font-semibold flex items-center gap-2.5 shadow-lg transition-transform duration-300 translate-y-10 opacity-0 ${
+                type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
+            }`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> <span>${message}</span>`;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Custom Confirmation Modal Logic
+        let confirmCallback = null;
+        function showConfirm(title, message, callback) {
+            document.getElementById("confirmTitle").innerText = title;
+            document.getElementById("confirmMessage").innerText = message;
+            document.getElementById("confirmModal").classList.remove("hidden");
+            confirmCallback = callback;
+        }
+
+        function closeConfirmModal() {
+            document.getElementById("confirmModal").classList.add("hidden");
+            confirmCallback = null;
+        }
+
+        document.getElementById("btnConfirmYes").addEventListener("click", () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeConfirmModal();
+        });
+
+        // Config Modal Trigger
+        window.openConfigModal = function() {
+            document.getElementById("configModal").classList.remove("hidden");
+        };
+        window.closeConfigModal = function() {
+            document.getElementById("configModal").classList.add("hidden");
+        };
+
+        // Simpan Konfigurasi Cloud & Hubungkan
+        document.getElementById("configForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const config = {
+                apiKey: document.getElementById("cfg_apiKey").value.trim(),
+                authDomain: document.getElementById("cfg_authDomain").value.trim(),
+                projectId: document.getElementById("cfg_projectId").value.trim(),
+                storageBucket: document.getElementById("cfg_storageBucket").value.trim(),
+                messagingSenderId: document.getElementById("cfg_messagingSenderId").value.trim(),
+                appId: document.getElementById("cfg_appId").value.trim()
+            };
+
+            localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(config));
+            closeConfigModal();
+            showToast("Menghubungkan ke database cloud baru...");
+            await connectToFirebase(config);
+        });
+
+        // Load Default Cloud Demo Config (Jika belum punya sendiri)
+        window.loadDefaultConfig = function() {
+            // Placeholder template KDMP
+            document.getElementById("cfg_apiKey").value = "";
+            document.getElementById("cfg_authDomain").value = "kdmp-bima.firebaseapp.com";
+            document.getElementById("cfg_projectId").value = "kdmp-bima";
+            document.getElementById("cfg_storageBucket").value = "kdmp-bima.appspot.com";
+            document.getElementById("cfg_messagingSenderId").value = "123456789";
+            document.getElementById("cfg_appId").value = "1:123456789:web:abcdef12345";
+            showToast("Kredensial template terisi! Ganti dengan parameter Firebase asli Anda.");
+        };
+
+        // Putuskan koneksi online
+        window.disconnectCloud = function() {
+            localStorage.removeItem(FIREBASE_CONFIG_KEY);
+            closeConfigModal();
+            useLocalMode();
+            showToast("Cloud terputus! Beralih kembali ke database offline.", "error");
+        };
+
+        function updateConfigFormFields(config) {
+            document.getElementById("cfg_apiKey").value = config.apiKey || "";
+            document.getElementById("cfg_authDomain").value = config.authDomain || "";
+            document.getElementById("cfg_projectId").value = config.projectId || "";
+            document.getElementById("cfg_storageBucket").value = config.storageBucket || "";
+            document.getElementById("cfg_messagingSenderId").value = config.messagingSenderId || "";
+            document.getElementById("cfg_appId").value = config.appId || "";
+        }
+
+        // ==================== RENDERING COMPONENT ENGINE ====================
+        
+        // Render Beranda
+        function renderBeranda() {
+            let total = locations.length;
+            let proses = locations.filter(l => l.prosesBangun === "YA").length;
+            let layak = locations.filter(l => analisisKelayakan(l) === "LAYAK").length;
+            let perhatian = locations.filter(l => analisisKelayakan(l) === "PERHATIAN").length;
+            let tidakLayak = locations.filter(l => analisisKelayakan(l) === "TIDAK LAYAK").length;
+
+            // Stats Cards Builder
+            const statsContainer = document.getElementById("statsContainer");
+            statsContainer.innerHTML = `
+                <div class="stat-card cursor-pointer bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-5 rounded-2xl border border-emerald-500/20 flex flex-col justify-between transition-all" data-filter="layak">
+                    <span class="text-xs font-bold uppercase tracking-wider">Layak</span>
+                    <span class="text-3xl font-extrabold mt-3 leading-none">${layak}</span>
+                </div>
+                <div class="stat-card cursor-pointer bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 p-5 rounded-2xl border border-amber-500/20 flex flex-col justify-between transition-all" data-filter="perhatian">
+                    <span class="text-xs font-bold uppercase tracking-wider">Perhatian</span>
+                    <span class="text-3xl font-extrabold mt-3 leading-none">${perhatian}</span>
+                </div>
+                <div class="stat-card cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 p-5 rounded-2xl border border-rose-500/20 flex flex-col justify-between transition-all" data-filter="tidak">
+                    <span class="text-xs font-bold uppercase tracking-wider">Tidak Layak</span>
+                    <span class="text-3xl font-extrabold mt-3 leading-none">${tidakLayak}</span>
+                </div>
+                <div class="stat-card cursor-pointer bg-violet-500/10 hover:bg-violet-500/20 text-violet-600 dark:text-violet-400 p-5 rounded-2xl border border-violet-500/20 flex flex-col justify-between transition-all" data-filter="proses">
+                    <span class="text-xs font-bold uppercase tracking-wider">Pembangunan</span>
+                    <span class="text-3xl font-extrabold mt-3 leading-none">${proses}</span>
+                </div>
+                <div class="stat-card bg-slate-500/10 text-slate-600 dark:text-slate-400 p-5 rounded-2xl border border-slate-500/20 flex flex-col justify-between transition-all">
+                    <span class="text-xs font-bold uppercase tracking-wider">Total Lahan</span>
+                    <span class="text-3xl font-extrabold mt-3 leading-none">${total}</span>
+                </div>
+            `;
+
+            // Setup listeners for stats cards
+            document.querySelectorAll(".stat-card[data-filter]").forEach(card => {
+                card.addEventListener("click", (e) => {
+                    let f = card.dataset.filter;
+                    resetAllFilters();
+                    if (f === 'layak') document.getElementById("filterKelayakan").value = "LAYAK";
+                    if (f === 'perhatian') document.getElementById("filterKelayakan").value = "PERHATIAN";
+                    if (f === 'tidak') document.getElementById("filterKelayakan").value = "TIDAK LAYAK";
+                    if (f === 'proses') document.getElementById("filterProses").value = "YA";
+                    renderRekap();
+                    triggerNavTab("rekap");
+                });
+            });
+
+            // Kategori List Builder
+            let kategoriMap = new Map();
+            locations.forEach(l => {
+                let kat = l.kepemilikan || "Lahan Desa";
+                kategoriMap.set(kat, (kategoriMap.get(kat) || 0) + 1);
+            });
+            let kategoriHtml = '';
+            for (let [k, v] of kategoriMap) {
+                kategoriHtml += `
+                    <button class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-700" data-kategori="${k}">
+                        <i class="fas fa-tag"></i> ${k} <span class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] px-1.5 py-0.5 rounded-full hover:bg-brand-400">${v}</span>
+                    </button>
+                `;
+            }
+            document.getElementById("kategoriList").innerHTML = kategoriHtml || '<span class="text-xs text-slate-400">Belum ada kategori</span>';
+            
+            document.querySelectorAll('[data-kategori]').forEach(el => {
+                el.addEventListener("click", (e) => {
+                    let kat = el.getAttribute('data-kategori');
+                    resetAllFilters();
+                    document.getElementById("filterKepemilikan").value = kat;
+                    renderRekap();
+                    triggerNavTab("rekap");
+                });
+            });
+
+            // Build Charts
+            renderCharts(layak, perhatian, tidakLayak, proses, total);
+        }
+
+        // Render Charts Engine
+        function renderCharts(layak, perhatian, tidakLayak, proses, total) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+            // Chart Kelayakan
+            if (chartKelayakan) chartKelayakan.destroy();
+            chartKelayakan = new Chart(document.getElementById("chartKelayakan").getContext("2d"), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Layak', 'Perhatian', 'Tidak Layak'],
+                    datasets: [{
+                        data: [layak, perhatian, tidakLayak],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Plus Jakarta Sans', size: 11 } } }
+                    }
+                }
+            });
+
+            // Chart Proses
+            if (chartProses) chartProses.destroy();
+            chartProses = new Chart(document.getElementById("chartProses").getContext("2d"), {
+                type: 'pie',
+                data: {
+                    labels: ['Proses (YA)', 'Belum (TIDAK)'],
+                    datasets: [{
+                        data: [proses, total - proses],
+                        backgroundColor: ['#6366f1', '#94a3b8'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Plus Jakarta Sans', size: 11 } } }
+                    }
+                }
+            });
+
+            // Chart Kepemilikan Lahan
+            let kepMap = new Map();
+            locations.forEach(l => {
+                if (l.kepemilikan !== "Tidak Ada Lokasi") {
+                    kepMap.set(l.kepemilikan, (kepMap.get(l.kepemilikan) || 0) + 1);
+                }
+            });
+            let kepLabels = Array.from(kepMap.keys());
+            let kepCounts = Array.from(kepMap.values());
+
+            if (chartKepemilikan) chartKepemilikan.destroy();
+            chartKepemilikan = new Chart(document.getElementById("chartKepemilikan").getContext("2d"), {
+                type: 'polarArea',
+                data: {
+                    labels: kepLabels.length ? kepLabels : ['Kosong'],
+                    datasets: [{
+                        data: kepCounts.length ? kepCounts : [0],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: { grid: { color: gridColor }, ticks: { backdropColor: 'transparent', color: textColor } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Plus Jakarta Sans', size: 9 } } }
+                    }
+                }
+            });
+
+            // Chart Perbandingan (Desa vs Lahan)
+            const kecamatanList = Object.keys(kecamatanDesaData).sort();
+            const jumlahDesa = kecamatanList.map(k => kecamatanDesaData[k].length);
+            const jumlahLahan = kecamatanList.map(kec => locations.filter(l => l.kecamatan === kec && l.kepemilikan !== "Tidak Ada Lokasi").length);
+
+            if (chartPerbandingan) chartPerbandingan.destroy();
+            chartPerbandingan = new Chart(document.getElementById("chartPerbandingan").getContext("2d"), {
+                type: 'bar',
+                data: {
+                    labels: kecamatanList,
+                    datasets: [
+                        {
+                            label: 'Jumlah Desa (Geografis)',
+                            data: jumlahDesa,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Lahan KDMP Terdata',
+                            data: jumlahLahan,
+                            backgroundColor: '#ef4444',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: textColor, font: { family: 'Plus Jakarta Sans', size: 9 }, rotation: -45 } },
+                        y: { grid: { color: gridColor }, ticks: { color: textColor, stepSize: 1 } }
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { color: textColor, font: { family: 'Plus Jakarta Sans', size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        // Render Rekapan Data Table (Selalu tersortir menurut abjad kecamatan)
+        function renderRekap() {
+            let filtered = [...locations];
+
+            let kec = document.getElementById("filterKecamatan").value;
+            let desa = document.getElementById("filterDesa").value;
+            let kep = document.getElementById("filterKepemilikan").value;
+            let seng = document.getElementById("filterSengketa").value;
+            let lsd = document.getElementById("filterLSD").value;
+            let proses = document.getElementById("filterProses").value;
+            let kel = document.getElementById("filterKelayakan").value;
+            let dok = document.getElementById("filterKelengkapan").value.trim().toLowerCase();
+            let lebarText = document.getElementById("filterLebar").value.trim();
+            let panjangText = document.getElementById("filterPanjang").value.trim();
+            let search = document.getElementById("filterText").value.trim().toLowerCase();
+
+            if (kec) filtered = filtered.filter(l => l.kecamatan === kec);
+            if (desa) filtered = filtered.filter(l => l.desa === desa);
+            if (kep) filtered = filtered.filter(l => l.kepemilikan === kep);
+            if (seng) filtered = filtered.filter(l => l.bersengketa === seng);
+            if (lsd) filtered = filtered.filter(l => (l.lsdStatus || "Tidak") === lsd);
+            if (proses) filtered = filtered.filter(l => l.prosesBangun === proses);
+            if (kel) filtered = filtered.filter(l => analisisKelayakan(l) === kel);
+            
+            if (dok) {
+                filtered = filtered.filter(l => (l.kelengkapanDokumen || "").toLowerCase().includes(dok));
+            }
+
+            if (lebarText) {
+                let parts = lebarText.split(",");
+                let min = parseFloat(parts[0]);
+                let max = parts[1] ? parseFloat(parts[1]) : Infinity;
+                filtered = filtered.filter(l => (l.lebarDepan || 0) >= min && (l.lebarDepan || 0) <= max);
+            }
+
+            if (panjangText) {
+                let parts = panjangText.split(",");
+                let min = parseFloat(parts[0]);
+                let max = parts[1] ? parseFloat(parts[1]) : Infinity;
+                filtered = filtered.filter(l => (l.panjang || 0) >= min && (l.panjang || 0) <= max);
+            }
+
+            if (search) {
+                filtered = filtered.filter(l => 
+                    l.kecamatan.toLowerCase().includes(search) ||
+                    l.desa.toLowerCase().includes(search) ||
+                    l.kepemilikan.toLowerCase().includes(search) ||
+                    (l.keterangan || "").toLowerCase().includes(search)
+                );
+            }
+
+            // MANDATORY RULE: Selalu tersortir alfabetis berdasarkan Kecamatan (sekunder: Desa)
+            filtered.sort((a, b) => {
+                const kecCompare = a.kecamatan.localeCompare(b.kecamatan);
+                if (kecCompare !== 0) return kecCompare;
+                return a.desa.localeCompare(b.desa);
+            });
+
+            // Populate Table Rows
+            const tbody = document.getElementById("rekapBody");
+            let html = "";
+            
+            filtered.forEach((item, idx) => {
+                let statusKelayakan = analisisKelayakan(item);
+                
+                let badgeKelayakan = "";
+                if (statusKelayakan === "LAYAK") {
+                    badgeKelayakan = `<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">LAYAK</span>`;
+                } else if (statusKelayakan === "PERHATIAN") {
+                    badgeKelayakan = `<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">PERHATIAN</span>`;
+                } else {
+                    badgeKelayakan = `<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">TIDAK LAYAK</span>`;
+                }
+
+                let badgeSengketa = item.bersengketa === "Ya" 
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-500">Ya</span>`
+                    : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-400">Tidak</span>`;
+
+                let badgeProses = item.prosesBangun === "YA"
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-500">YA</span>`
+                    : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-400">TIDAK</span>`;
+
+                // Handle string or number for ID inside Javascript inline calls
+                const paramId = typeof item.id === 'string' ? `'${item.id}'` : item.id;
+
+                html += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+                        <td class="py-3 px-4 text-center text-slate-400">${idx + 1}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-900 dark:text-white">${item.kecamatan}</td>
+                        <td class="py-3 px-4 font-semibold">${item.desa}</td>
+                        <td class="py-3 px-4 text-slate-500">${item.kepemilikan}</td>
+                        <td class="py-3 px-4 text-center">${badgeSengketa}</td>
+                        <td class="py-3 px-4 text-center text-slate-500 font-mono">${item.lebarDepan || '-'}</td>
+                        <td class="py-3 px-4 text-center text-slate-500 font-mono">${item.panjang || '-'}</td>
+                        <td class="py-3 px-4 text-slate-500">${item.lsdStatus !== 'Tidak' ? `<span class="text-amber-500 font-bold">${item.lsdStatus}</span>` : 'Tidak'}</td>
+                        <td class="py-3 px-4 text-center">${badgeProses}</td>
+                        <td class="py-3 px-4 text-center">${badgeKelayakan}</td>
+                        <td class="py-3 px-4 text-slate-400 truncate max-w-[150px]" title="${item.kelengkapanDokumen || ''}">${item.kelengkapanDokumen || '-'}</td>
+                        <td class="py-3 px-4 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button onclick="showDetail(${paramId})" class="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-lg transition" title="Lihat Detail Lengkap">
+                                    <i class="fas fa-eye text-sm"></i>
+                                </button>
+                                <button onclick="viewOnMap('${item.kecamatan}','${item.desa}','${item.koordinat || ''}')" class="p-1.5 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 text-sky-600 dark:text-sky-400 rounded-lg transition" title="Lihat di Peta">
+                                    <i class="fas fa-map-marked-alt text-sm"></i>
+                                </button>
+                                <button onclick="editData(${paramId})" class="p-1.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 text-amber-600 dark:text-amber-400 rounded-lg transition" title="Edit Data">
+                                    <i class="fas fa-edit text-sm"></i>
+                                </button>
+                                <button onclick="deleteData(${paramId})" class="p-1.5 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 text-rose-600 dark:text-rose-400 rounded-lg transition" title="Hapus Data">
+                                    <i class="fas fa-trash text-sm"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html || `<tr><td colspan="12" class="py-8 text-center text-slate-400 dark:text-slate-500">Tidak ada data lahan yang sesuai dengan kriteria saringan.</td></tr>`;
+
+            // Update stats indicators
+            let layak = filtered.filter(l => analisisKelayakan(l) === "LAYAK").length;
+            let perhatian = filtered.filter(l => analisisKelayakan(l) === "PERHATIAN").length;
+            let tidak = filtered.filter(l => analisisKelayakan(l) === "TIDAK LAYAK").length;
+
+            document.getElementById("totalCount").innerText = filtered.length;
+            document.getElementById("layakCount").innerText = layak;
+            document.getElementById("perhatianCount").innerText = perhatian;
+            document.getElementById("tidakLayakCount").innerText = tidak;
+        }
+
+        // Reset All Filter Values
+        function resetAllFilters() {
+            document.getElementById("filterKecamatan").value = "";
+            document.getElementById("filterDesa").value = "";
+            document.getElementById("filterKepemilikan").value = "";
+            document.getElementById("filterSengketa").value = "";
+            document.getElementById("filterLSD").value = "";
+            document.getElementById("filterProses").value = "";
+            document.getElementById("filterKelayakan").value = "";
+            document.getElementById("filterKelengkapan").value = "";
+            document.getElementById("filterLebar").value = "";
+            document.getElementById("filterPanjang").value = "";
+            document.getElementById("filterText").value = "";
+            
+            updateRekapDesaFilter();
+        }
+
+        // ==================== GIS MAPS INTEGRATION ENGINE ====================
+        function initMap() {
+            if (map) return;
+            
+            // Center of Kabupaten Bima
+            map = L.map('map').setView([-8.45, 118.72], 10);
+            
+            // Tile Layer Default Google Hybrid (Satelit & Label)
+            currentTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                maxZoom: 20,
+                attribution: '© Google Maps'
+            }).addTo(map);
+
+            markersLayer = L.layerGroup().addTo(map);
+            refreshMap();
+        }
+
+        function refreshMap() {
+            if (!markersLayer) return;
+            markersLayer.clearLayers();
+
+            locations.forEach(loc => {
+                let coord = parseCoordinates(loc.koordinat);
+                if (coord) {
+                    let statusKelayakan = analisisKelayakan(loc);
+                    
+                    // Colors
+                    let color = "#10b981"; // Layak
+                    if (statusKelayakan === "PERHATIAN") color = "#f59e0b";
+                    if (statusKelayakan === "TIDAK LAYAK") color = "#ef4444";
+
+                    // Custom SVG Marker (Pulsing Effect if Active Construction)
+                    let isProses = loc.prosesBangun === "YA";
+                    let pulseHtml = isProses ? `<span class="absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75 animate-ping"></span>` : "";
+
+                    let customIcon = L.divIcon({
+                        className: 'relative',
+                        html: `
+                            <div class="relative flex items-center justify-center w-6 h-6">
+                                ${pulseHtml}
+                                <span class="relative inline-flex rounded-full h-4.5 w-4.5 border-2 border-white shadow-md shadow-black/30" style="background-color: ${color}"></span>
+                            </div>
+                        `,
+                        iconSize: [24, 24]
+                    });
+
+                    L.marker(coord, { icon: customIcon })
+                        .bindPopup(`
+                            <div class="text-slate-800 text-xs space-y-1">
+                                <div class="font-extrabold text-sm border-b pb-1 mb-1 text-brand-600">${loc.desa}, ${loc.kecamatan}</div>
+                                <div><b>Kepemilikan:</b> ${loc.kepemilikan}</div>
+                                <div><b>Luas Lahan:</b> ${loc.lebarDepan && loc.panjang ? `${loc.lebarDepan * loc.panjang} m² (${loc.lebarDepan}x${loc.panjang})` : '-'}</div>
+                                <div><b>Sengketa:</b> ${loc.bersengketa}</div>
+                                <div><b>Zona LSD/LBS:</b> ${loc.lsdStatus}</div>
+                                <div><b>Pembangunan:</b> ${loc.prosesBangun === 'YA' ? '<span class="text-indigo-600 font-bold">AKTIF</span>' : 'BELUM'}</div>
+                                <div class="pt-1.5 font-bold uppercase" style="color: ${color}">STATUS: ${statusKelayakan}</div>
+                                ${loc.keterangan ? `<div class="text-[10px] text-slate-500 italic mt-1">${loc.keterangan}</div>` : ''}
+                            </div>
+                        `)
+                        .addTo(markersLayer);
+                }
+            });
+        }
+
+        function parseCoordinates(str) {
+            if (!str || !str.includes(",")) return null;
+            let parts = str.split(",");
+            let lat = parseFloat(parts[0].trim());
+            let lng = parseFloat(parts[1].trim());
+            if (!isNaN(lat) && !isNaN(lng)) {
+                return [lat, lng];
+            }
+            return null;
+        }
+
+        function viewOnMap(kec, desa, coordStr) {
+            let coord = parseCoordinates(coordStr);
+            if (!coord) {
+                showToast("Lokasi lahan tidak memiliki koordinat koordinat valid!", "error");
+                return;
+            }
+            triggerNavTab("peta");
+            setTimeout(() => {
+                if (map) {
+                    map.flyTo(coord, 16);
+                    L.popup()
+                        .setLatLng(coord)
+                        .setContent(`<b class="text-xs text-brand-600">${desa}, ${kec}</b>`)
+                        .openOn(map);
+                }
+            }, 250);
+        }
+
+        // ==================== DROPDOWN POPULATION ENGINE ====================
+        function populateFormsDropdowns() {
+            // Form Kecamatan & Desa
+            const kecSelect = document.getElementById("kecamatan");
+            kecSelect.innerHTML = '<option value="">Pilih Kecamatan</option>';
+            Object.keys(kecamatanDesaData).sort().forEach(k => {
+                kecSelect.innerHTML += `<option value="${k}">${k}</option>`;
+            });
+
+            kecSelect.addEventListener("change", function () {
+                const selectedKec = this.value;
+                const desaSelect = document.getElementById("desa");
+                if (selectedKec && kecamatanDesaData[selectedKec]) {
+                    desaSelect.innerHTML = '<option value="">Pilih Desa</option>' + 
+                        kecamatanDesaData[selectedKec].map(d => `<option value="${d}">${d}</option>`).join('');
+                    desaSelect.disabled = false;
+                } else {
+                    desaSelect.innerHTML = '<option value="">Pilih Kecamatan dulu</option>';
+                    desaSelect.disabled = true;
+                }
+            });
+
+            // Form Kepemilikan Lahan
+            const kepSelect = document.getElementById("kepemilikan");
+            kepSelect.innerHTML = daftarKepemilikanLahan.map(k => `<option value="${k}">${k}</option>`).join('');
+
+            // Filter Dropdowns
+            const filterKec = document.getElementById("filterKecamatan");
+            filterKec.innerHTML = '<option value="">Semua Kecamatan</option>' + 
+                Object.keys(kecamatanDesaData).sort().map(k => `<option value="${k}">${k}</option>`).join('');
+            
+            filterKec.addEventListener("change", updateRekapDesaFilter);
+
+            const filterKep = document.getElementById("filterKepemilikan");
+            filterKep.innerHTML = '<option value="">Semua Kepemilikan</option>' + 
+                daftarKepemilikanLahan.map(k => `<option value="${k}">${k}</option>`).join('');
+        }
+
+        function updateRekapDesaFilter() {
+            let kec = document.getElementById("filterKecamatan").value;
+            let desaSelect = document.getElementById("filterDesa");
+            if (kec && kecamatanDesaData[kec]) {
+                desaSelect.innerHTML = '<option value="">Semua Desa</option>' + 
+                    kecamatanDesaData[kec].map(d => `<option value="${d}">${d}</option>`).join('');
+            } else {
+                desaSelect.innerHTML = '<option value="">Semua Desa</option>';
+            }
+        }
+
+        // ==================== DETAIL MODAL COMPONENT ====================
+        window.showDetail = function(id) {
+            let item = locations.find(l => l.id == id);
+            if (!item) return;
+
+            let kel = analisisKelayakan(item);
+            let banner = document.getElementById("detailStatusBanner");
+            let statusText = document.getElementById("detailStatusText");
+            let statusIcon = document.getElementById("detailStatusIcon");
+
+            // Setup banner colors based on Kelayakan
+            if (kel === "LAYAK") {
+                banner.className = "p-4 rounded-2xl flex items-center justify-between bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+                statusText.innerText = "LAYAK";
+                statusIcon.innerHTML = `<i class="fas fa-check-circle"></i>`;
+            } else if (kel === "PERHATIAN") {
+                banner.className = "p-4 rounded-2xl flex items-center justify-between bg-amber-500/10 text-amber-600 dark:text-amber-400";
+                statusText.innerText = "PERHATIAN";
+                statusIcon.innerHTML = `<i class="fas fa-exclamation-triangle"></i>`;
+            } else {
+                banner.className = "p-4 rounded-2xl flex items-center justify-between bg-rose-500/10 text-rose-600 dark:text-rose-400";
+                statusText.innerText = "TIDAK LAYAK";
+                statusIcon.innerHTML = `<i class="fas fa-times-circle"></i>`;
+            }
+
+            document.getElementById("detailModalTitle").innerText = `Rincian Lahan: Desa ${item.desa}`;
+            document.getElementById("detailKecamatan").innerText = item.kecamatan;
+            document.getElementById("detailDesa").innerText = item.desa;
+            document.getElementById("detailKepemilikan").innerText = item.kepemilikan;
+            
+            // Sengketa
+            const sengketaEl = document.getElementById("detailSengketa");
+            if (item.bersengketa === "Ya") {
+                sengketaEl.className = "font-bold text-rose-500";
+                sengketaEl.innerText = "Ya (Sedang Bersengketa)";
+            } else {
+                sengketaEl.className = "font-semibold text-slate-700 dark:text-slate-300";
+                sengketaEl.innerText = "Bebas Sengketa (Tidak)";
+            }
+
+            // Dimensi & Luas
+            const l = item.lebarDepan;
+            const p = item.panjang;
+            document.getElementById("detailDimensi").innerText = (l && p) ? `${l} m x ${p} m` : "-";
+            document.getElementById("detailLuas").innerText = (l && p) ? `${(l * p).toLocaleString('id-ID')} m²` : "-";
+
+            // LSD
+            const lsdEl = document.getElementById("detailLsd");
+            if (item.lsdStatus !== "Tidak") {
+                lsdEl.className = "font-bold text-amber-500";
+                lsdEl.innerText = item.lsdStatus;
+            } else {
+                lsdEl.className = "font-semibold text-slate-700 dark:text-slate-300";
+                lsdEl.innerText = "Bebas Kendala LSD/LBS (Tidak)";
+            }
+
+            // Progress Pembangunan
+            const prosesEl = document.getElementById("detailProses");
+            if (item.prosesBangun === "YA") {
+                prosesEl.className = "font-bold text-indigo-500";
+                prosesEl.innerText = "Ya (Dalam Pembangunan Aktif)";
+            } else {
+                prosesEl.className = "font-semibold text-slate-450 dark:text-slate-400";
+                prosesEl.innerText = "Belum Ada Pembangunan (Tidak)";
+            }
+
+            document.getElementById("detailDokumen").innerText = item.kelengkapanDokumen || "Tidak Ada Dokumen Tercatat";
+            document.getElementById("detailKoordinat").innerText = item.koordinat || "Belum Terpetakan / Tidak Ada Koordinat";
+            document.getElementById("detailKeterangan").innerText = item.keterangan || "Tidak ada catatan khusus untuk lokasi ini.";
+
+            // Action Buttons mapping inside modal
+            const mapBtn = document.getElementById("btnDetailMap");
+            mapBtn.onclick = function() {
+                closeDetailModal();
+                viewOnMap(item.kecamatan, item.desa, item.koordinat || '');
+            };
+
+            const editBtn = document.getElementById("btnDetailEdit");
+            editBtn.onclick = function() {
+                closeDetailModal();
+                editData(item.id);
+            };
+
+            document.getElementById("detailModal").classList.remove("hidden");
+        };
+
+        window.closeDetailModal = function() {
+            document.getElementById("detailModal").classList.add("hidden");
+        };
+
+
+        // ==================== DATA ACTIONS ENGINE (MUTATIONS) ====================
+        
+        // Hapus Data (Diganti dengan Custom Confirmation Modal yang elegan)
+        window.deleteData = function(id) {
+            let item = locations.find(l => l.id == id);
+            if (!item) return;
+
+            showConfirm(
+                "Hapus Data Lahan", 
+                `Apakah Anda yakin ingin menghapus data sebaran lahan di Desa ${item.desa}, Kecamatan ${item.kecamatan} dari database?`, 
+                async function() {
+                    if (isCloudConnected && db) {
+                        try {
+                            const { doc, deleteDoc } = window.FirebaseSDK;
+                            await deleteDoc(doc(db, "lahan_kdmp", String(id)));
+                            showToast("Data lahan dihapus dari Cloud Database!");
+                        } catch (err) {
+                            showToast("Gagal menghapus data dari Cloud!", "error");
+                        }
+                    } else {
+                        locations = locations.filter(l => l.id != id);
+                        saveToLocal();
+                        renderAll();
+                        showToast("Data lahan berhasil dihapus dari sistem lokal!");
+                    }
+                }
+            );
+        };
+
+        // Edit Data Setup
+        window.editData = function(id) {
+            let item = locations.find(l => l.id == id);
+            if (!item) return;
+
+            document.getElementById("editIndex").value = id;
+            document.getElementById("kecamatan").value = item.kecamatan;
+            
+            // Trigger Change event for Kecamatan select to load Desa options
+            const event = new Event('change');
+            document.getElementById("kecamatan").dispatchEvent(event);
+
+            // Small delay to let the select render
+            setTimeout(() => {
+                document.getElementById("desa").value = item.desa;
+            }, 80);
+
+            document.getElementById("kepemilikan").value = item.kepemilikan;
+            document.getElementById("sengketa").value = item.bersengketa;
+            document.getElementById("lebar").value = item.lebarDepan || "";
+            document.getElementById("panjang").value = item.panjang || "";
+            document.getElementById("lsd").value = item.lsdStatus || "Tidak";
+            document.getElementById("prosesBangun").value = item.prosesBangun;
+            document.getElementById("koordinat").value = item.koordinat || "";
+            document.getElementById("kelengkapanDokumen").value = item.kelengkapanDokumen || "";
+            document.getElementById("keterangan").value = item.keterangan || "";
+
+            // Toggle Visual States
+            document.getElementById("formStatus").innerHTML = `Form Edit Data Lahan - ${item.desa}`;
+            document.getElementById("cancelEditBtn").classList.remove("hidden");
+            
+            triggerNavTab("master");
+            window.scrollTo({ top: 120, behavior: 'smooth' });
+        };
+
+        // Clear Form Entry
+        function clearForm() {
+            document.getElementById("editIndex").value = "-1";
+            document.getElementById("locationForm").reset();
+            document.getElementById("desa").disabled = true;
+            document.getElementById("desa").innerHTML = '<option value="">Pilih Kecamatan dulu</option>';
+            document.getElementById("formStatus").innerHTML = "Form Entri Lokasi Baru";
+            document.getElementById("cancelEditBtn").classList.add("hidden");
+        }
+
+        // Save Form (Create or Update)
+        document.getElementById("locationForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            let editId = document.getElementById("editIndex").value;
+
+            let lVal = document.getElementById("lebar").value;
+            let pVal = document.getElementById("panjang").value;
+
+            let coreData = {
+                kecamatan: document.getElementById("kecamatan").value,
+                desa: document.getElementById("desa").value,
+                kepemilikan: document.getElementById("kepemilikan").value,
+                bersengketa: document.getElementById("sengketa").value,
+                lebarDepan: lVal ? parseFloat(lVal) : null,
+                panjang: pVal ? parseFloat(pVal) : null,
+                lsdStatus: document.getElementById("lsd").value,
+                prosesBangun: document.getElementById("prosesBangun").value,
+                koordinat: document.getElementById("koordinat").value,
+                kelengkapanDokumen: document.getElementById("kelengkapanDokumen").value,
+                keterangan: document.getElementById("keterangan").value
+            };
+
+            if (isCloudConnected && db) {
+                try {
+                    const { doc, setDoc, collection, addDoc } = window.FirebaseSDK;
+                    if (editId !== "-1") {
+                        // Update
+                        await setDoc(doc(db, "lahan_kdmp", String(editId)), coreData, { merge: true });
+                        showToast("Informasi lahan berhasil disinkronkan ke Cloud!");
+                    } else {
+                        // Create
+                        const docRef = await addDoc(collection(db, "lahan_kdmp"), coreData);
+                        showToast("Lahan baru disinkronkan ke Cloud Database!");
+                    }
+                } catch (err) {
+                    console.error("Cloud Save Error:", err);
+                    showToast("Gagal mengunggah data ke Cloud!", "error");
+                }
+            } else {
+                // Offline Local Mutation
+                let numericEditId = parseInt(editId);
+                let newData = {
+                    id: numericEditId !== -1 ? numericEditId : nextId++,
+                    ...coreData
+                };
+
+                if (numericEditId !== -1) {
+                    let idx = locations.findIndex(l => l.id == numericEditId);
+                    if (idx !== -1) locations[idx] = newData;
+                    showToast("Informasi lahan berhasil diperbarui di lokal!");
+                } else {
+                    locations.push(newData);
+                    showToast("Lahan baru didaftarkan di lokal!");
+                }
+                saveToLocal();
+                renderAll();
+            }
+
+            clearForm();
+        });
+
+        document.getElementById("cancelEditBtn").addEventListener("click", clearForm);
+        document.getElementById("clearFormBtn").addEventListener("click", clearForm);
+
+        // Hapus Semua Data
+        document.getElementById("deleteAllDataBtn").addEventListener("click", function() {
+            showConfirm(
+                "Peringatan Hapus Seluruh Database", 
+                "PERINGATAN! Anda akan menghapus SELURUH data lahan KDMP dari sistem penyimpanan aktif (Cloud/Lokal). Tindakan ini tidak dapat dibatalkan. Lanjutkan?", 
+                async function() {
+                    if (isCloudConnected && db) {
+                        try {
+                            const { doc, deleteDoc } = window.FirebaseSDK;
+                            // Hapus satu-persatu karena web-SDK dilarang hapus seluruh collection sekaligus tanpa Cloud Function
+                            for (let loc of locations) {
+                                await deleteDoc(doc(db, "lahan_kdmp", String(loc.id)));
+                            }
+                            showToast("Seluruh database Cloud dikosongkan!", "success");
+                        } catch (err) {
+                            showToast("Gagal membersihkan Cloud Database!", "error");
+                        }
+                    } else {
+                        locations = [];
+                        nextId = 1;
+                        saveToLocal();
+                        renderAll();
+                        showToast("Seluruh database lokal telah dikosongkan!", "error");
+                    }
+                }
+            );
+        });
+
+        // ==================== IMPOR & EKSPOR SYSTEM (XLSX, JSON, KML) ====================
+
+        // Ekspor Semua / Excel (MANDATORY RULE: Juga disortir berdasarkan abjad kecamatan saat ekspor)
+        document.getElementById("exportMasterExcelBtn").addEventListener("click", () => {
+            let sortedLocations = [...locations];
+            sortedLocations.sort((a, b) => {
+                const kecCompare = a.kecamatan.localeCompare(b.kecamatan);
+                if (kecCompare !== 0) return kecCompare;
+                return a.desa.localeCompare(b.desa);
+            });
+
+            let exportData = sortedLocations.map(l => ({
+                Kecamatan: l.kecamatan, 
+                Desa: l.desa, 
+                "Kepemilikan Lahan": l.kepemilikan,
+                Bersengketa: l.bersengketa, 
+                "Lebar Depan": l.lebarDepan || "", 
+                "Panjang Kebelakang": l.panjang || "",
+                "LSD/LBS/LP2B": l.lsdStatus, 
+                "Proses Pembangunan": l.prosesBangun,
+                Kelayakan: analisisKelayakan(l), 
+                "Kelengkapan Dokumen": l.kelengkapanDokumen || "",
+                Koordinat: l.koordinat, 
+                Keterangan: l.keterangan
+            }));
+
+            let ws = XLSX.utils.json_to_sheet(exportData);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Database_Lahan_KDMP");
+            XLSX.writeFile(wb, `KDMP_BIMA_MASTER_${Date.now()}.xlsx`);
+            showToast("Berhasil mengekspor semua data ke format Excel!");
+        });
+
+        // Ekspor Filtered / Rekapan (MANDATORY RULE: Sudah tersortir berdasarkan abjad kecamatan)
+        document.getElementById("exportRekapBtn").addEventListener("click", () => {
+            let filtered = [...locations];
+            let kec = document.getElementById("filterKecamatan").value;
+            let desa = document.getElementById("filterDesa").value;
+            let kep = document.getElementById("filterKepemilikan").value;
+            let seng = document.getElementById("filterSengketa").value;
+            let lsd = document.getElementById("filterLSD").value;
+            let proses = document.getElementById("filterProses").value;
+            let kel = document.getElementById("filterKelayakan").value;
+            let dok = document.getElementById("filterKelengkapan").value.trim().toLowerCase();
+            let lebarText = document.getElementById("filterLebar").value.trim();
+            let panjangText = document.getElementById("filterPanjang").value.trim();
+            let search = document.getElementById("filterText").value.trim().toLowerCase();
+
+            if (kec) filtered = filtered.filter(l => l.kecamatan === kec);
+            if (desa) filtered = filtered.filter(l => l.desa === desa);
+            if (kep) filtered = filtered.filter(l => l.kepemilikan === kep);
+            if (seng) filtered = filtered.filter(l => l.bersengketa === seng);
+            if (lsd) filtered = filtered.filter(l => (l.lsdStatus || "Tidak") === lsd);
+            if (proses) filtered = filtered.filter(l => l.prosesBangun === proses);
+            if (kel) filtered = filtered.filter(l => analisisKelayakan(l) === kel);
+            if (dok) filtered = filtered.filter(l => (l.kelengkapanDokumen || "").toLowerCase().includes(dok));
+            if (lebarText) {
+                let parts = lebarText.split(",");
+                let min = parseFloat(parts[0]);
+                let max = parts[1] ? parseFloat(parts[1]) : Infinity;
+                filtered = filtered.filter(l => (l.lebarDepan || 0) >= min && (l.lebarDepan || 0) <= max);
+            }
+            if (panjangText) {
+                let parts = panjangText.split(",");
+                let min = parseFloat(parts[0]);
+                let max = parts[1] ? parseFloat(parts[1]) : Infinity;
+                filtered = filtered.filter(l => (l.panjang || 0) >= min && (l.panjang || 0) <= max);
+            }
+            if (search) {
+                filtered = filtered.filter(l => 
+                    l.kecamatan.toLowerCase().includes(search) || l.desa.toLowerCase().includes(search)
+                );
+            }
+
+            // Urutkan alfabetis kecamatan
+            filtered.sort((a, b) => {
+                const kecCompare = a.kecamatan.localeCompare(b.kecamatan);
+                if (kecCompare !== 0) return kecCompare;
+                return a.desa.localeCompare(b.desa);
+            });
+
+            let exportData = filtered.map(l => ({
+                Kecamatan: l.kecamatan, 
+                Desa: l.desa, 
+                "Kepemilikan Lahan": l.kepemilikan,
+                Bersengketa: l.bersengketa, 
+                "Lebar Depan": l.lebarDepan || "", 
+                "Panjang Kebelakang": l.panjang || "",
+                "LSD/LBS/LP2B": l.lsdStatus, 
+                "Proses Pembangunan": l.prosesBangun,
+                Kelayakan: analisisKelayakan(l), 
+                "Kelengkapan Dokumen": l.kelengkapanDokumen || "",
+                Koordinat: l.koordinat, 
+                Keterangan: l.keterangan
+            }));
+
+            let ws = XLSX.utils.json_to_sheet(exportData);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Saringan_KDMP");
+            XLSX.writeFile(wb, `KDMP_BIMA_REKAP_${Date.now()}.xlsx`);
+            showToast("Hasil saringan berhasil diekspor ke Excel!");
+        });
+
+        // Impor Excel / XLSX
+        document.getElementById("importExcelBtn").addEventListener("click", () => {
+            let input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".xlsx";
+            input.onchange = e => {
+                let file = e.target.files[0];
+                let reader = new FileReader();
+                reader.onload = async ev => {
+                    try {
+                        let wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+                        let sheet = wb.Sheets[wb.SheetNames[0]];
+                        let rows = XLSX.utils.sheet_to_json(sheet);
+                        
+                        if (isCloudConnected && db) {
+                            const { collection, addDoc } = window.FirebaseSDK;
+                            for (let row of rows) {
+                                await addDoc(collection(db, "lahan_kdmp"), {
+                                    kecamatan: row["Kecamatan"] || "",
+                                    desa: row["Desa"] || "",
+                                    kepemilikan: row["Kepemilikan Lahan"] || "Lahan Desa",
+                                    bersengketa: row["Bersengketa"] || "Tidak",
+                                    lebarDepan: row["Lebar Depan"] ? parseFloat(row["Lebar Depan"]) : null,
+                                    panjang: row["Panjang Kebelakang"] ? parseFloat(row["Panjang Kebelakang"]) : null,
+                                    lsdStatus: row["LSD/LBS/LP2B"] || "Tidak",
+                                    prosesBangun: row["Proses Pembangunan"] || "TIDAK",
+                                    koordinat: row["Koordinat"] || "",
+                                    kelengkapanDokumen: row["Kelengkapan Dokumen"] || "",
+                                    keterangan: row["Keterangan"] || ""
+                                });
+                            }
+                            showToast(`Berhasil menyinkronkan ${rows.length} data baru ke Cloud!`);
+                        } else {
+                            rows.forEach(row => {
+                                locations.push({
+                                    id: nextId++,
+                                    kecamatan: row["Kecamatan"] || "",
+                                    desa: row["Desa"] || "",
+                                    kepemilikan: row["Kepemilikan Lahan"] || "Lahan Desa",
+                                    bersengketa: row["Bersengketa"] || "Tidak",
+                                    lebarDepan: row["Lebar Depan"] ? parseFloat(row["Lebar Depan"]) : null,
+                                    panjang: row["Panjang Kebelakang"] ? parseFloat(row["Panjang Kebelakang"]) : null,
+                                    lsdStatus: row["LSD/LBS/LP2B"] || "Tidak",
+                                    prosesBangun: row["Proses Pembangunan"] || "TIDAK",
+                                    koordinat: row["Koordinat"] || "",
+                                    kelengkapanDokumen: row["Kelengkapan Dokumen"] || "",
+                                    keterangan: row["Keterangan"] || ""
+                                });
+                            });
+                            saveToLocal();
+                            renderAll();
+                            showToast(`Berhasil mengimpor ${rows.length} data lahan baru ke browser!`);
+                        }
+                    } catch (err) {
+                        showToast("Terjadi kesalahan membaca format file Excel!", "error");
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            };
+            input.click();
+        });
+
+        // Backup to JSON file
+        document.getElementById("backupToLocalBtn").addEventListener("click", () => {
+            const dataStr = JSON.stringify(locations, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `KDMP_BIMA_BACKUP_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("Backup JSON berhasil diunduh!");
+        });
+
+        // Restore from JSON file
+        document.getElementById("restoreFromLocalBtn").addEventListener("click", () => {
+            document.getElementById("restoreFileInput").click();
+        });
+
+        document.getElementById("restoreFileInput").addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                try {
+                    const restored = JSON.parse(event.target.result);
+                    if (Array.isArray(restored)) {
+                        if (isCloudConnected && db) {
+                            const { collection, addDoc } = window.FirebaseSDK;
+                            for (let row of restored) {
+                                await addDoc(collection(db, "lahan_kdmp"), {
+                                    kecamatan: row.kecamatan || "",
+                                    desa: row.desa || "",
+                                    kepemilikan: row.kepemilikan || "Lahan Desa",
+                                    bersengketa: row.bersengketa || "Tidak",
+                                    lebarDepan: row.lebarDepan || null,
+                                    panjang: row.panjang || null,
+                                    lsdStatus: row.lsdStatus || "Tidak",
+                                    prosesBangun: row.prosesBangun || "TIDAK",
+                                    koordinat: row.koordinat || "",
+                                    kelengkapanDokumen: row.kelengkapanDokumen || "",
+                                    keterangan: row.keterangan || ""
+                                });
+                            }
+                            showToast(`Cloud Database berhasil dipulihkan dengan ${restored.length} data.`);
+                        } else {
+                            locations = restored;
+                            nextId = locations.length > 0 ? Math.max(...locations.map(l => l.id)) + 1 : 1;
+                            saveToLocal();
+                            renderAll();
+                            showToast(`Database lokal berhasil dipulihkan! ${locations.length} lokasi aktif.`);
+                        }
+                    } else {
+                        showToast("Format file backup tidak sesuai standar!", "error");
+                    }
+                } catch(err) {
+                    showToast("Gagal memproses berkas backup!", "error");
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ""; // Reset
+        });
+
+        // Export KML (Google Earth)
+        document.getElementById("exportKmlBtn").addEventListener("click", () => {
+            let kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Titik Sebaran KDMP Kabupaten Bima</name>
+    <description>Sistem Geospasial Lahan Merah Putih</description>`;
+            
+            locations.forEach(loc => {
+                let coord = parseCoordinates(loc.koordinat);
+                if (coord) {
+                    kml += `
+    <Placemark>
+      <name>${loc.desa} - ${loc.kecamatan}</name>
+      <description>
+        <![CDATA[
+          Status: ${analisisKelayakan(loc)}<br/>
+          Kepemilikan: ${loc.kepemilikan}<br/>
+          Sengketa: ${loc.bersengketa}<br/>
+          Proses Pembangunan: ${loc.prosesBangun}
+        ]]>
+      </description>
+      <Point>
+        <coordinates>${coord[1]},${coord[0]},0</coordinates>
+      </Point>
+    </Placemark>`;
+                }
+            });
+
+            kml += `
+  </Document>
+</kml>`;
+
+            saveAs(new Blob([kml], { type: "application/vnd.google-earth.kml+xml" }), `KDMP_BIMA_MAP_${Date.now()}.kml`);
+            showToast("Peta berhasil diekspor ke KML untuk Google Earth!");
+        });
+
+
+        // ==================== NAVIGATION & INTERACTION ENGINE ====================
+        
+        function triggerNavTab(pageId) {
+            document.querySelectorAll(".nav-btn").forEach(btn => {
+                const isActive = btn.getAttribute("data-page") === pageId;
+                if (isActive) {
+                    btn.className = "nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition bg-brand-500 text-white shadow-sm";
+                } else {
+                    btn.className = "nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
+                }
+            });
+
+            document.querySelectorAll(".page-section").forEach(sec => {
+                if (sec.id === pageId) {
+                    sec.classList.remove("hidden");
+                } else {
+                    sec.classList.add("hidden");
+                }
+            });
+
+            // Specific Page Init Calls
+            if (pageId === "peta") {
+                setTimeout(() => {
+                    if (map) {
+                        map.invalidateSize();
+                    } else {
+                        initMap();
+                    }
+                    refreshMap();
+                }, 100);
+            }
+        }
+
+        document.querySelectorAll(".nav-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                triggerNavTab(btn.getAttribute("data-page"));
+            });
+        });
+
+        // Theme Toggle
+        document.getElementById("themeToggle").addEventListener("click", () => {
+            const html = document.documentElement;
+            html.classList.toggle("dark");
+            
+            const isDark = html.classList.contains("dark");
+            const icon = document.getElementById("themeToggle").querySelector("i");
+            if (isDark) {
+                icon.className = "fas fa-sun";
+                showToast("Beralih ke Mode Gelap");
+            } else {
+                icon.className = "fas fa-moon";
+                showToast("Beralih ke Mode Terang");
+            }
+
+            // Re-render charts with updated color modes
+            let layak = locations.filter(l => analisisKelayakan(l) === "LAYAK").length;
+            let perhatian = locations.filter(l => analisisKelayakan(l) === "PERHATIAN").length;
+            let tidakLayak = locations.filter(l => analisisKelayakan(l) === "TIDAK LAYAK").length;
+            let proses = locations.filter(l => l.prosesBangun === "YA").length;
+            renderCharts(layak, perhatian, tidakLayak, proses, locations.length);
+        });
+
+        // Map Control Buttons
+        document.getElementById("satelliteLabelBtn").addEventListener("click", () => {
+            if (!map) return;
+            if (currentTileLayer) map.removeLayer(currentTileLayer);
+            currentTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                maxZoom: 20
+            }).addTo(map);
+            showToast("Peta diubah: Citra Satelit + Label");
+        });
+
+        document.getElementById("satelliteOnlyBtn").addEventListener("click", () => {
+            if (!map) return;
+            if (currentTileLayer) map.removeLayer(currentTileLayer);
+            currentTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                maxZoom: 20
+            }).addTo(map);
+            showToast("Peta diubah: Hanya Citra Satelit");
+        });
+
+        document.getElementById("resetViewBtn").addEventListener("click", () => {
+            if (map) {
+                map.setView([-8.45, 118.72], 10);
+                showToast("Fokus peta direset ke Kabupaten Bima!");
+            }
+        });
+
+        document.getElementById("refreshMapBtn").addEventListener("click", () => {
+            refreshMap();
+            showToast("Marka peta sebaran berhasil diperbarui!");
+        });
+
+        // Table Filter Change Listeners
+        const filterIds = [
+            "filterKecamatan", "filterDesa", "filterKepemilikan", "filterSengketa", 
+            "filterLSD", "filterProses", "filterKelayakan", "filterKelengkapan", 
+            "filterLebar", "filterPanjang"
+        ];
+        filterIds.forEach(id => {
+            document.getElementById(id).addEventListener("change", renderRekap);
+        });
+        document.getElementById("filterText").addEventListener("keyup", renderRekap);
+        document.getElementById("filterKelengkapan").addEventListener("keyup", renderRekap);
+        document.getElementById("resetFilter").addEventListener("click", () => {
+            resetAllFilters();
+            renderRekap();
+            showToast("Saringan data berhasil dikosongkan!");
+        });
+
+        // ==================== RENDERING ALL ENGINE ====================
+        function renderAll() {
+            renderBeranda();
+            renderRekap();
+            if (map) refreshMap();
+        }
+
+        // ==================== SYSTEM BOOTSTRAP INIT ====================
+        window.addEventListener("DOMContentLoaded", () => {
+            populateFormsDropdowns();
+            
+            // Berikan jeda sejenak untuk memuat Firebase SDK secara modular
+            setTimeout(() => {
+                loadData();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
