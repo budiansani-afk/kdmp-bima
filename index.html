@@ -81,6 +81,23 @@
             transform: translateY(-2px);
             box-shadow: 0 12px 20px -12px #0ea5e9;
         }
+        .btn-secondary-outline {
+            background: transparent;
+            border: 1.5px solid #0ea5e9;
+            color: #0ea5e9;
+            transition: all 0.2s;
+        }
+        .btn-secondary-outline:hover {
+            background: rgba(14, 165, 233, 0.1);
+            transform: translateY(-2px);
+        }
+        .dark .btn-secondary-outline {
+            border-color: #f97316;
+            color: #f97316;
+        }
+        .dark .btn-secondary-outline:hover {
+            background: rgba(249, 115, 22, 0.15);
+        }
         .section-title:after {
             background: linear-gradient(90deg, #0ea5e9, #3b82f6, #f97316);
             width: 80px;
@@ -137,8 +154,10 @@
                 <button id="darkModeToggle" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-700 dark:text-yellow-300 shadow-sm hover:scale-105 transition">
                     <i id="darkModeIcon" class="fas fa-moon text-sm"></i>
                 </button>
-                <!-- TOMBOL MULAI (DESKTOP) - LANGSUNG BUKA APLIKASI -->
-                <a href="aplikasi_kdmp.html" target="_blank" rel="noopener noreferrer" class="hidden md:inline-block btn-primary-grad text-white px-5 py-3 rounded-full text-xl font-bold shadow-md">MULAI →</a>
+                <!-- TOMBOL DAFTAR AKUN (DESKTOP) - SEKARANG DI SEBELAH KIRI TOMBOL MULAI -->
+                <a href="akun_kdmp.html" target="_blank" rel="noopener noreferrer" class="hidden md:inline-block btn-secondary-outline px-5 py-2.5 rounded-full text-sm font-bold shadow-sm transition">Daftar Akun</a>
+                <!-- TOMBOL MULAI (DESKTOP) -->
+                <a href="aplikasi_kdmp.html" target="_blank" rel="noopener noreferrer" class="hidden md:inline-block btn-primary-grad text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-md">MULAI →</a>
                 <button id="mobileMenuBtn" class="md:hidden text-4xl text-gray-700 dark:text-gray-300"><i class="fas fa-bars"></i></button>
             </div>
         </div>
@@ -146,12 +165,14 @@
             <a href="#home" class="py-2 font-medium hover:text-blue-600">Beranda</a>
             <a href="#tentang" class="py-2 font-medium hover:text-blue-600">Tentang</a>
             <a href="#fitur" class="py-2 font-medium hover:text-blue-600">Fitur</a>
-            <!-- TOMBOL MULAI (MOBILE) - LANGSUNG BUKA APLIKASI -->
+            <!-- TOMBOL DAFTAR AKUN (MOBILE) - DILETAKKAN DI ATAS MULAI -->
+            <a href="akun_kdmp.html" target="_blank" rel="noopener noreferrer" class="btn-secondary-outline text-center py-2 rounded-full font-bold mt-1">Daftar Akun</a>
+            <!-- TOMBOL MULAI (MOBILE) -->
             <a href="aplikasi_kdmp.html" target="_blank" rel="noopener noreferrer" class="btn-primary-grad text-white text-center py-2 rounded-full font-bold mt-1">Mulai Sekarang</a>
         </div>
     </nav>
 
-    <!-- HERO SECTION (tetap, tanpa perubahan tombol mulai) -->
+    <!-- HERO SECTION (tidak diubah) -->
     <section id="home" class="hero-grad-baru pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden">
         <div class="container mx-auto px-6">
             <div class="flex flex-col lg:flex-row items-center gap-12">
@@ -201,7 +222,7 @@
         </div>
     </section>
 
-    <!-- TENTANG / MAKSUD & TUJUAN (tidak diubah) -->
+    <!-- TENTANG / MAKSUD & TUJUAN -->
     <section id="tentang" class="py-20 bg-abu-mix">
         <div class="container mx-auto px-6">
             <div class="text-center max-w-3xl mx-auto mb-14">
@@ -229,7 +250,7 @@
         </div>
     </section>
 
-    <!-- FITUR (tidak diubah) -->
+    <!-- FITUR -->
     <section id="fitur" class="py-20 bg-white dark:bg-slate-900">
         <div class="container mx-auto px-6">
             <div class="text-center max-w-2xl mx-auto mb-12">
@@ -272,7 +293,7 @@
         </div>
     </section>
 
-    <!-- Testimoni (tidak diubah) -->
+    <!-- Testimoni -->
     <section class="py-16 bg-abu-mix dark:bg-slate-800/40">
         <div class="container mx-auto px-6 text-center max-w-4xl">
             <i class="fas fa-quote-left text-4xl text-blue-300 dark:text-blue-700 mb-4"></i>
