@@ -543,7 +543,7 @@
                         <table class="w-full text-left border-collapse min-w-[900px]">
                             <thead><tr class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-darkBorder text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] font-bold">
                                 <th class="py-3 px-4">Tanggal</th><th class="py-3 px-4">Jam</th><th class="py-3 px-4">Pengguna</th><th class="py-3 px-4">Jenis Aktivitas</th><th class="py-3 px-4">Keterangan</th><th class="py-3 px-4 text-center">Aksi</th>
-                            </tr></thead>
+                             </tr></thead>
                             <tbody id="logTableBody" class="divide-y divide-slate-100 dark:divide-darkBorder text-xs"></tbody>
                         </table>
                     </div>
@@ -703,25 +703,50 @@ window.showDetailModal = function(id) {
             return result.isConfirmed;
         }
 
-        async function logActivity(jenis, keterangan) {
-            if (!currentUser) return;
+        async function logActivity(jenis, keterangan, userOverride = null) {
+            const user = userOverride || currentUser;
+            if (!user) return;
             const now = new Date();
             const tanggalWaktu = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
             try {
                 await window.FirebaseSDK.addDoc(window.FirebaseSDK.collection(db, "activity_logs"), {
-                    tanggalWaktu, namaPengguna: currentUser.namaPengguna, akun: currentUser.email,
-                    level: currentUser.level, aktivitas: `${jenis}: ${keterangan}`, timestamp: now.toISOString()
+                    tanggalWaktu, namaPengguna: user.namaPengguna, akun: user.email,
+                    level: user.level, aktivitas: `${jenis}: ${keterangan}`, timestamp: now.toISOString()
                 });
             } catch(e) { console.warn(e); }
         }
 
-        // CRUD dengan pengecekan hak akses
+        // MODIFICATION: Hapus ID dari log edit dan hapus
         async function saveLocation(data, editId) {
             if (currentUser?.level === 'pengguna') { showError("Akses Ditolak", "Anda tidak memiliki izin."); return; }
             try {
                 if (editId) {
+                    const oldItem = locations.find(l => l.id == editId);
+                    if (oldItem) {
+                        const changes = [];
+                        const fields = ['kecamatan', 'desa', 'kepemilikan', 'bersengketa', 'lebarDepan', 'panjang', 'lsdStatus', 'prosesBangun', 'koordinat', 'kelengkapanDokumen', 'keterangan'];
+                        fields.forEach(field => {
+                            let oldVal = oldItem[field];
+                            let newVal = data[field];
+                            if (field === 'lebarDepan' || field === 'panjang') {
+                                oldVal = oldVal || 0;
+                                newVal = newVal || 0;
+                            }
+                            if (oldVal != newVal) {
+                                let oldStr = oldVal === undefined || oldVal === null ? '-' : oldVal.toString();
+                                let newStr = newVal === undefined || newVal === null ? '-' : newVal.toString();
+                                changes.push(`${field}: ${oldStr} → ${newStr}`);
+                            }
+                        });
+                        if (changes.length > 0) {
+                            await logActivity("Edit Data", `Mengubah data lahan (${data.desa}, ${data.kecamatan}) - Detail: ${changes.join(', ')}`);
+                        } else {
+                            await logActivity("Edit Data", `Mengedit data lahan (${data.desa}, ${data.kecamatan}) tanpa perubahan nilai`);
+                        }
+                    } else {
+                        await logActivity("Edit Data", `Mengedit data lahan (${data.desa}, ${data.kecamatan}) - data lama tidak ditemukan`);
+                    }
                     await window.FirebaseSDK.updateDoc(window.FirebaseSDK.doc(db, "lahan_kdmp", editId), data);
-                    await logActivity("Edit Data", `Mengedit data lahan ID:${editId} (${data.desa}, ${data.kecamatan})`);
                 } else {
                     await window.FirebaseSDK.addDoc(window.FirebaseSDK.collection(db, "lahan_kdmp"), data);
                     await logActivity("Tambah Data", `Menambah data lahan baru: ${data.desa}, ${data.kecamatan}`);
@@ -736,7 +761,7 @@ window.showDetailModal = function(id) {
             if (!item || !(await showConfirm("Hapus Data?", `Hapus ${item.desa}, ${item.kecamatan}?`))) return;
             try {
                 await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(db, "lahan_kdmp", id));
-                await logActivity("Hapus Data", `Menghapus data lahan ID:${id} (${item.desa})`);
+                await logActivity("Hapus Data", `Menghapus data lahan (${item.desa}, ${item.kecamatan})`);
                 showSuccess("Berhasil", "Data dihapus");
             } catch(e) { showError("Gagal", e.message); }
         }
@@ -863,7 +888,6 @@ window.showDetailModal = function(id) {
         const loginForm = document.getElementById("loginForm");
         const loginError = document.getElementById("loginError");
 
-        // Fungsi untuk menampilkan aplikasi setelah login berhasil
         function showApp(userData) {
             currentUser = userData;
             loginContainer.style.display = "none";
@@ -889,39 +913,15 @@ window.showDetailModal = function(id) {
                 document.getElementById("restoreFromLocalBtn").style.display = "flex";
                 document.getElementById("importExcelBtn").style.display = "flex";
             }
-            // Subscribe ke data lahan
             const qLahan = window.FirebaseSDK.query(window.FirebaseSDK.collection(db, "lahan_kdmp"));
             if (unsubscribeLahan) unsubscribeLahan();
             unsubscribeLahan = window.FirebaseSDK.onSnapshot(qLahan, (snapshot) => { locations = []; snapshot.forEach(docSnap => locations.push({ id: docSnap.id, ...docSnap.data() })); renderAll(); });
-            // Subscribe log aktivitas
             const qLogs = window.FirebaseSDK.query(window.FirebaseSDK.collection(db, "activity_logs"));
             window.FirebaseSDK.onSnapshot(qLogs, (snap) => { activityLogs = []; snap.forEach(d => activityLogs.push({ id: d.id, ...d.data() })); if(document.getElementById("log") && !document.getElementById("log").classList.contains("hidden")) renderLogPage(); });
             triggerNavTab("beranda");
         }
 
-        // Firebase Auth state listener (menjaga session setelah refresh)
-        window.FirebaseSDK.onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // User sudah login (session tersimpan)
-                const userDoc = await window.FirebaseSDK.getDoc(window.FirebaseSDK.doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    showApp({ uid: user.uid, email: user.email, level: userData.level, namaPengguna: userData.namaPengguna });
-                } else {
-                    // Akun tidak valid, logout
-                    await window.FirebaseSDK.signOut(auth);
-                    loginContainer.style.display = "flex";
-                    appContent.style.display = "none";
-                }
-            } else {
-                // Belum login, tampilkan login screen
-                loginContainer.style.display = "flex";
-                appContent.style.display = "none";
-                if (unsubscribeLahan) unsubscribeLahan();
-            }
-        });
-
-        // Login form submission
+        // MODIFICATION: Tambahkan log login pada submit
         loginForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const email = document.getElementById("loginEmail").value.trim();
@@ -929,19 +929,41 @@ window.showDetailModal = function(id) {
             loginError.innerText = "";
             try {
                 const userCred = await window.FirebaseSDK.signInWithEmailAndPassword(auth, email, password);
-                // onAuthStateChanged akan menangani selanjutnya
+                const userDoc = await window.FirebaseSDK.getDoc(window.FirebaseSDK.doc(db, "users", userCred.user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    await logActivity("Login", `Pengguna ${userData.namaPengguna} (${email}) masuk ke sistem`, userData);
+                } else {
+                    await logActivity("Login", `Pengguna dengan email ${email} mencoba login tetapi data tidak ditemukan`, { namaPengguna: "Unknown", email, level: "unknown" });
+                }
             } catch(err) {
                 loginError.innerText = "Akun atau Password tidak valid.";
             }
         });
 
-        // Logout
+        window.FirebaseSDK.onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDoc = await window.FirebaseSDK.getDoc(window.FirebaseSDK.doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    showApp({ uid: user.uid, email: user.email, level: userData.level, namaPengguna: userData.namaPengguna });
+                } else {
+                    await window.FirebaseSDK.signOut(auth);
+                    loginContainer.style.display = "flex";
+                    appContent.style.display = "none";
+                }
+            } else {
+                loginContainer.style.display = "flex";
+                appContent.style.display = "none";
+                if (unsubscribeLahan) unsubscribeLahan();
+            }
+        });
+
         document.getElementById("logoutBtn").addEventListener("click", async () => {
             if (currentUser) await logActivity("Logout", `Pengguna ${currentUser.namaPengguna} keluar`);
             await window.FirebaseSDK.signOut(auth);
         });
 
-        // Populate dropdowns & event listeners lainnya
         function populateFormsDropdowns(){
             const kecSelect=document.getElementById("kecamatan"); kecSelect.innerHTML='<option value="">Pilih Kecamatan</option>';
             Object.keys(kecamatanDesaData).sort().forEach(k=>kecSelect.innerHTML+=`<option value="${k}">${k}</option>`);
@@ -977,8 +999,6 @@ window.showDetailModal = function(id) {
         }
         populateFormsDropdowns();
 
-        // ========= PERBAIKAN NAVIGASI =========
-        // Menambahkan event listener ke semua tombol navigasi agar perpindahan halaman berfungsi
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const page = btn.getAttribute('data-page');
