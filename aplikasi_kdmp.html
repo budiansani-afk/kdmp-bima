@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>KDMP Kabupaten Bima - Aplikasi Terpadu</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff7f4',
+                            100: '#ffe4dc',
+                            500: '#d92d20',
+                            600: '#b42318',
+                            700: '#8f1d15',
+                        },
+                        darkBg: '#1f2937',
+                        darkCard: '#273449',
+                        darkBorder: '#475569'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- SheetJS (xlsx) & FileSaver -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .swal2-popup.swal-kecil{
+            width:280px !important;
+            padding:12px !important;
+            font-size:12px !important;
+        }
+        .swal-kecil .swal2-title{
+            font-size:16px !important;
+            margin-bottom:5px !important;
+        }
+        .swal-kecil .swal2-html-container{
+            font-size:12px !important;
+            margin:8px 0 !important;
+        }
+        .swal-kecil .swal2-actions{
+            margin-top:10px !important;
+        }
+        .swal-kecil .swal2-confirm,
+        .swal-kecil .swal2-cancel{
+            font-size:11px !important;
+            padding:6px 10px !important;
+        }
+/* ===== MODAL FUTURISTIK ===== */
+.futuristic-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.futuristic-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+.futuristic-modal {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(245,245,255,0.95) 100%);
+    backdrop-filter: blur(2px);
+    border-radius: 32px;
+    width: 90%;
+    max-width: 850px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(217,45,32,0.2), 0 0 0 4px rgba(217,45,32,0.1);
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+    position: relative;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.dark .futuristic-modal {
+    background: linear-gradient(135deg, rgba(30,41,59,0.98) 0%, rgba(20,30,45,0.98) 100%);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(217,45,32,0.3), 0 0 0 4px rgba(217,45,32,0.15);
+}
+.futuristic-modal-overlay.active .futuristic-modal {
+    transform: scale(1);
+}
+.futuristic-modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid rgba(217,45,32,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(217,45,32,0.05);
+    border-radius: 32px 32px 0 0;
+}
+.futuristic-modal-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #d92d20, #f97316);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.futuristic-modal-title i {
+    background: none;
+    color: #d92d20;
+    font-size: 1.8rem;
+}
+.futuristic-modal-close {
+    background: rgba(0,0,0,0.1);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #64748b;
+    font-size: 1.2rem;
+}
+.dark .futuristic-modal-close {
+    background: rgba(255,255,255,0.1);
+    color: #cbd5e1;
+}
+.futuristic-modal-close:hover {
+    background: #d92d20;
+    color: white;
+    transform: rotate(90deg);
+}
+.futuristic-modal-body {
+    padding: 2rem;
+}
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.2rem 2rem;
+}
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.6rem 1rem;     /* lebih rapat */
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;             /* jarak ikon-teks lebih kecil */
+    padding: 0.5rem 0.8rem; /* padding lebih kecil */
+    background: rgba(217,45,32,0.03);
+    border-radius: 20px;
+    transition: all 0.2s;
+    border-left: 3px solid #d92d20;
+}
+
+.detail-label {
+    font-size: 0.65rem;   /* sedikit lebih kecil dari 0.7rem */
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 2px;   /* lebih rapat */
+}
+
+.detail-value {
+    font-size: 0.9rem;    /* sedikit lebih kecil dari 1rem */
+    font-weight: 600;
+    color: #1e293b;
+    word-break: break-word;
+}
+
+.detail-icon {
+    width: 32px;          /* perkecil ikon dari 36px */
+    height: 32px;
+    background: linear-gradient(145deg, #d92d20, #b91c1c);
+    border-radius: 14px;  /* sedikit lebih kecil */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;      /* ikon font lebih kecil */
+    flex-shrink: 0;
+    box-shadow: 0 8px 14px -8px rgba(217,45,32,0.4);
+}
+.detail-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+.dark .detail-label {
+    color: #94a3b8;
+}
+.detail-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    word-break: break-word;
+}
+.dark .detail-value {
+    color: #f1f5f9;
+}
+.kelayakan-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 40px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: #10b98120;
+    color: #10b981;
+    border: 1px solid #10b98140;
+}
+.kelayakan-badge.perhatian {
+    background: #f59e0b20;
+    color: #f59e0b;
+    border-color: #f59e0b40;
+}
+.kelayakan-badge.tidak-layak {
+    background: #ef444420;
+    color: #ef4444;
+    border-color: #ef444440;
+}
+.futuristic-modal-footer {
+    padding: 1rem 2rem 2rem;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(217,45,32,0.1);
+}
+.modal-action-btn {
+    background: linear-gradient(95deg, #d92d20, #b91c1c);
+    border: none;
+    padding: 10px 24px;
+    border-radius: 40px;
+    color: white;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(217,45,32,0.3);
+}
+.modal-action-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    box-shadow: 0 10px 20px -5px rgba(217,45,32,0.5);
+}
+.futuristic-modal::-webkit-scrollbar {
+    width: 6px;
+}
+.futuristic-modal::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
+    border-radius: 10px;
+}
+.futuristic-modal::-webkit-scrollbar-thumb {
+    background: #d92d20;
+    border-radius: 10px;
+}
+        /* Gaya untuk layar login */
+        #loginContainer {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: radial-gradient(circle at top left, rgba(239, 68, 68, 0.12), transparent 32rem), radial-gradient(circle at top right, rgba(59, 130, 246, 0.14), transparent 34rem), linear-gradient(135deg, #fffafa 0%, #f8fafc 42%, #fff7ed 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .dark #loginContainer {
+            background: radial-gradient(circle at top left, rgba(248, 113, 113, 0.12), transparent 34rem), radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 36rem), linear-gradient(135deg, #111827 0%, #1f2937 50%, #2f3542 100%);
+        }
+        .login-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(16px);
+            border-radius: 2rem;
+            width: 100%;
+            max-width: 420px;
+            padding: 2rem;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .dark .login-card {
+            background: rgba(30, 41, 59, 0.96);
+            border-color: #475569;
+        }
+        #appContent {
+            display: none;
+        }
+        /* Sembunyikan tombol aksi untuk pengguna (hanya baca) */
+        .action-buttons-crud {
+            display: inline-flex !important;
+        }
+        body.pengguna-mode .action-buttons-crud,
+        body.pengguna-mode .btn-edit-delete,
+        body.pengguna-mode .crud-button {
+            display: none !important;
+        }
+    </style>
+
+    <!-- Firebase SDK (Modular v10+) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, writeBatch, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        window.FirebaseSDK = {
+            initializeApp, getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence,
+            getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, writeBatch,
+            getDocs, where
+        };
+    </script>
+
+    <style>
+        html { font-size: 16px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: radial-gradient(circle at top left, rgba(239, 68, 68, 0.12), transparent 32rem), radial-gradient(circle at top right, rgba(59, 130, 246, 0.14), transparent 34rem), linear-gradient(135deg, #fffafa 0%, #f8fafc 42%, #fff7ed 100%) !important; color: #263142; }
+        .dark body { background: radial-gradient(circle at top left, rgba(248, 113, 113, 0.12), transparent 34rem), radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 36rem), linear-gradient(135deg, #111827 0%, #1f2937 50%, #2f3542 100%) !important; }
+        nav, footer { background-color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px); }
+        .dark nav, .dark footer { background-color: rgba(39, 52, 73, 0.92); }
+        main, nav > div, footer { width: 100%; max-width: none !important; }
+        main { padding-left: clamp(1rem, 2vw, 2rem) !important; padding-right: clamp(1rem, 2vw, 2rem) !important; }
+        .nav-btn, input, select, textarea { font-size: 0.9rem; }
+        button { font-size: 0.82rem; }
+        #master, #master input, #master select, #master textarea, #master label, #master p, #master button, #master .text-xs, #master .text-sm { font-size: 0.78rem !important; }
+        #rekap, #rekap input, #rekap select, #rekap label, #rekap button, #rekap table, #rekap thead th, #rekap tbody td, #rekap .text-xs, #rekap .text-sm { font-size: 0.78rem !important; }
+        #master button, #rekap button, #peta button, #configModal button, #detailModal button, #confirmModal button, #demoConnectionBanner button, .nav-btn { padding: 0.48rem 0.78rem !important; font-size: 0.82rem !important; line-height: 1.2; }
+        #rekap button { font-size: 0.78rem !important; }
+        #master button { font-size: 0.76rem !important; }
+        #rekap .rekap-table-scroll { max-height: min(68vh, 720px); overflow: auto; scrollbar-gutter: stable both-edges; }
+        #rekap table { min-width: 1520px; font-size: 0.78rem; }
+        #rekap thead { position: sticky; top: 0; z-index: 20; }
+        #rekap thead tr { background: linear-gradient(90deg, rgba(217, 45, 32, 0.08), rgba(59, 130, 246, 0.08), rgba(249, 115, 22, 0.08)); }
+        #rekap thead th { background-color: rgba(248, 250, 252, 0.98); box-shadow: inset 0 -1px 0 rgba(148, 163, 184, 0.28); font-size: 0.78rem; color: #475569; }
+        .dark #rekap thead th { background-color: rgba(39, 52, 73, 0.98); color: #cbd5e1; }
+        #rekapBody { font-size: 0.78rem; line-height: 1.55; }
+        #rekap .rekap-note-cell { min-width: 220px; max-width: 320px; white-space: normal; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        #map { height: 500px; width: 100%; z-index: 10; }
+        .log-table-scroll { max-height: 55vh; overflow: auto; }
+        .highlight-row {
+            background-color: rgba(217, 45, 32, 0.2) !important;
+            transition: background-color 1s ease;
+        }
+        .dark .highlight-row {
+            background-color: rgba(217, 45, 32, 0.4) !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+
+    <!-- LAYAR LOGIN -->
+    <div id="loginContainer">
+        <div class="login-card">
+            <div class="flex justify-center mb-4">
+                <div class="w-20 h-20 bg-brand-100 dark:bg-brand-700/20 rounded-2xl flex items-center justify-center border border-brand-500/20 shadow-md overflow-hidden">
+                    <img src="https://desatepus.gunungkidulkab.go.id/assets/files/artikel/sedang_1763294672LOGO%20KDMP.jpg" alt="Logo KDMP" class="w-full h-full object-cover">
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-center text-slate-800 dark:text-white">Sistem Informasi KDMP</h2>
+            <p class="text-center font-bold  text-xl text-slate-800 dark:text-slate-400 mb-6">Kabupaten Bima</p>
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Email :</label>
+                    <input type="email" id="loginEmail" placeholder="nama@kdmp.com" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkBg bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand-500 outline-none" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Password :</label>
+                    <input type="password" id="loginPassword" placeholder="******" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkBg bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand-500 outline-none" required>
+                </div>
+                <button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition shadow-md"><i class="fas fa-sign-in-alt mr-2"></i> Masuk</button>
+                <div id="loginError" class="text-red-500 text-sm text-center mt-4"></div>
+            </form>
+            <p class="text-center text-[11px] text-slate-400 mt-6">© 2026 KDMP Kabupaten Bima</p>
+        </div>
+    </div>
+
+    <!-- KONTEN UTAMA APLIKASI -->
+    <div id="appContent">
+        <!-- NAVIGATION BAR -->
+        <nav class="sticky top-0 z-50 bg-white dark:bg-darkCard border-b border-slate-200 dark:border-darkBorder shadow-sm transition-colors duration-200">
+            <div class="w-full max-w-none mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-20 flex-wrap md:flex-nowrap gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-brand-100 dark:bg-brand-700/20 rounded-xl flex items-center justify-center border border-brand-500/20 shadow-inner overflow-hidden">
+                            <img src="https://desatepus.gunungkidulkab.go.id/assets/files/artikel/sedang_1763294672LOGO%20KDMP.jpg" alt="Logo KDMP" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-brand-500 dark:text-brand-100">Sistem Informasi</span>
+                                <span id="cloudStatusBadge" class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud Online
+                                </span>
+                            </div>
+                            <h1 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">KDMP Kabupaten Bima</h1>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-xl">
+                        <button data-page="beranda" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition bg-brand-500 text-white shadow-sm"><i class="fas fa-chart-pie"></i> Beranda</button>
+                        <button data-page="master" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"><i class="fas fa-edit"></i> Kelola Data</button>
+                        <button data-page="rekap" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"><i class="fas fa-list-ol"></i> Rekapan</button>
+                        <button data-page="peta" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"><i class="fas fa-map-marked-alt"></i> Peta Sebaran</button>
+                        <button id="logNavBtn" data-page="log" class="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"><i class="fas fa-history"></i> Log Aktivitas</button>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span id="userDisplayName" class="px-3 py-1.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-300 font-bold text-xs">Login sebagai: -</span>
+                        <span id="accessBadge" class="px-3 py-1.5 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300 font-bold text-xs">Akses: -</span>
+                        <button id="themeToggle" class="p-2.5 rounded-xl border border-slate-200 dark:border-darkBorder bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-700 dark:text-slate-300"><i class="fas fa-moon"></i></button>
+                        <button id="logoutBtn" class="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 transition"><i class="fas fa-sign-out-alt"></i></button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="w-full max-w-none mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Banner mode offline (tidak dipakai karena selalu online) -->
+            <div id="demoConnectionBanner" class="hidden mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-400 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5"><i class="fas fa-wifi-slash text-base"></i><div><span class="font-bold block">Mode Offline</span><span>Aplikasi tidak terhubung ke Cloud.</span></div></div>
+                <button onclick="openConfigModal()" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition"><i class="fas fa-plug mr-1"></i> Hubungkan Online</button>
+            </div>
+
+            <!-- Beranda -->
+            <div id="beranda" class="page-section space-y-8">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="statsContainer"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm"><h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4"><i class="fas fa-chart-donut mr-2"></i>Persentase Kelayakan</h3><div class="relative flex justify-center items-center h-64"><canvas id="chartKelayakan"></canvas></div></div>
+                    <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm"><h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4"><i class="fas fa-tasks mr-2"></i>Proses Pembangunan</h3><div class="relative flex justify-center items-center h-64"><canvas id="chartProses"></canvas></div></div>
+                    <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm"><h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4"><i class="fas fa-landmark mr-2"></i>Status Kepemilikan</h3><div class="relative flex justify-center items-center h-64"><canvas id="chartKepemilikan"></canvas></div></div>
+                </div>
+                <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm"><div class="flex items-center justify-between mb-6"><h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider"><i class="fas fa-chart-bar mr-2"></i>Jumlah Desa & Lahan Terdata per Kecamatan</h3></div><div class="relative h-96"><canvas id="chartPerbandingan"></canvas></div></div>
+                <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm"><h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4"><i class="fas fa-tags mr-2"></i>Kategori Lahan Terdata (Klik untuk melihat rincian)</h3><div id="kategoriList" class="flex flex-wrap gap-2"></div></div>
+                <div class="bg-slate-100 dark:bg-slate-800/40 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder flex flex-col md:flex-row gap-6 items-start md:items-center justify-between"><div><h4 class="text-base font-bold text-slate-900 dark:text-white mb-1">Pedoman Klasifikasi Kelayakan Lahan</h4><p class="text-sm text-slate-500 dark:text-slate-400 max-w-2xl">Penetapan status kelayakan didasarkan pada luas total lahan (minimal 600m²), ketiadaan sengketa hukum, serta status bebas dari zona Lindung / Sawah Dilindungi (LSD/LBS).</p></div><div class="flex gap-4 flex-wrap"><div class="flex items-center gap-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> LAYAK</div><div class="flex items-center gap-2 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> PERHATIAN</div><div class="flex items-center gap-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 px-3 py-1.5 rounded-lg text-xs font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> TIDAK LAYAK</div></div></div>
+            </div>
+
+            <!-- Master Data -->
+            <div id="master" class="page-section hidden space-y-8">
+                <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm overflow-hidden">
+                    <div class="border-b border-slate-100 dark:border-darkBorder bg-slate-50 dark:bg-slate-800/40 px-6 py-4 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white shadow-sm"><i class="fas fa-edit text-lg"></i></div><div><h2 class="text-base font-bold text-slate-900 dark:text-white" id="formStatus">Form Entri Lokasi Baru</h2><p class="text-xs text-slate-400 dark:text-slate-500">Isi data di bawah ini untuk menambahkan atau memperbarui data sebaran lahan KDMP</p></div></div></div>
+                    <div class="p-6">
+                        <form id="locationForm" class="space-y-6">
+                            <input type="hidden" id="editIndex" value="-1">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-city"></i> Kecamatan <span class="text-brand-500">*</span></label><select id="kecamatan" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none"><option value="">Pilih Kecamatan</option></select></div>
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-tree"></i> Desa / Kelurahan <span class="text-brand-500">*</span></label><select id="desa" required disabled class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none disabled:opacity-50"><option value="">Pilih Kecamatan dulu</option></select></div>
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-landmark"></i> Kepemilikan Lahan</label><select id="kepemilikan" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none"></select></div>
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-gavel"></i> Status Bersengketa</label><select id="sengketa" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none"><option value="Tidak">Tidak</option><option value="Ya">Ya (Sedang Sengketa)</option></select></div>
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-ruler-horizontal"></i> Lebar Depan (meter)</label><input type="number" id="lebar" step="0.1" placeholder="Masukkan angka lebar" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none"></div>
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-ruler-vertical"></i> Panjang Kebelakang (meter)</label><input type="number" id="panjang" step="0.1" placeholder="Masukkan angka panjang" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none"></div>
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-exclamation-triangle"></i> Status LSD / LBS / LP2B</label><select id="lsd" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none"><option value="Tidak">Tidak Ada Kendala Zona</option><option value="LSD">Lahan Sawah Dilindungi (LSD)</option><option value="LBS">Lahan Baku Sawah (LBS)</option><option value="LSD/LBS">LSD & LBS</option><option value="LP2B">Lahan Pertanian Pangan Berkelanjutan (LP2B)</option></select></div>
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-building"></i> Proses Pembangunan</label><select id="prosesBangun" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none"><option value="TIDAK">Belum Proses (TIDAK)</option><option value="YA">Dalam Pembangunan (YA)</option></select></div>
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-map-pin"></i> Titik Koordinat (Lat, Lng)</label><input type="text" id="koordinat" placeholder="Contoh: -8.4590, 118.7245" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none"></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-file-signature"></i> Kelengkapan Dokumen</label><input type="text" id="kelengkapanDokumen" placeholder="Ketik jenis kelengkapan (SHM No. X, Hibah, dll)" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none"></div>
+                                <div class="space-y-2"><label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-info-circle"></i> Catatan Khusus / Keterangan Tambahan</label><textarea id="keterangan" rows="1" placeholder="Masukkan rincian tambahan..." class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none resize-y min-h-[46px]"></textarea></div>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-darkBorder"><div class="flex flex-wrap gap-2"><button type="submit" id="submitFormBtn" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-md shadow-brand-500/20"><i class="fas fa-save"></i> Simpan Data Lahan</button><button type="button" id="cancelEditBtn" class="hidden px-5 py-2.5 bg-slate-500 hover:bg-slate-600 text-white font-semibold rounded-xl flex items-center gap-2 transition shadow-sm"><i class="fas fa-times"></i> Batal Edit</button><button type="button" id="clearFormBtn" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-xl flex items-center gap-2 transition"><i class="fas fa-eraser"></i> Bersihkan</button></div></div>
+                        </form>
+                    </div>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800/40 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                    <div class="space-y-1"><h4 class="text-base font-bold text-slate-900 dark:text-white"><i class="fas fa-shield-halved mr-2 text-brand-500"></i>Cadangan Mandiri & Pemulihan Sistem</h4><p class="text-sm text-slate-500 dark:text-slate-400">Unduh seluruh rekaman database dalam bentuk terenkripsi JSON terpadu atau pulihkan data dari cadangan lama.</p></div>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <button id="backupToLocalBtn" class="flex-1 md:flex-initial px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 transition"><i class="fas fa-download"></i> Unduh JSON</button>
+                        <button id="restoreFromLocalBtn" class="flex-1 md:flex-initial px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 transition"><i class="fas fa-upload"></i> Pulihkan JSON</button>
+                        <button id="importExcelBtn" class="flex-1 md:flex-initial px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-sm"><i class="fas fa-file-excel"></i> Impor Excel</button>
+                        <input type="file" id="restoreFileInput" accept=".json" class="hidden">
+                        <input type="file" id="importExcelFileInput" accept=".xlsx" class="hidden">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rekapan -->
+            <div id="rekap" class="page-section hidden space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-3"><button id="toggleFilterPanel" class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm shadow-brand-500/20"><i class="fas fa-filter"></i><span id="toggleFilterText">Tampilkan Filter</span></button><button id="exportRekapBtn" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm shadow-emerald-500/20"><i class="fas fa-file-excel"></i> Ekspor Rincian (.xlsx)</button></div>
+                <div id="filterPanel" class="hidden bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm p-6"><div class="flex items-center gap-2 pb-4 mb-6 border-b border-slate-100 dark:border-darkBorder"><i class="fas fa-filter text-brand-500 text-lg"></i><h3 class="text-base font-bold text-slate-900 dark:text-white">Panel Penyaring Lahan</h3></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><div class="space-y-1"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Kecamatan</label><select id="filterKecamatan" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"><option value="">Semua Kecamatan</option></select></div><div class="space-y-1"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Desa</label><select id="filterDesa" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"><option value="">Semua Desa</option></select></div><div class="space-y-1"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Kepemilikan</label><select id="filterKepemilikan" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"><option value="">Semua Kepemilikan</option></select></div><div class="space-y-1"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sengketa</label><select id="filterSengketa" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"><option value="">Semua Status</option><option value="Tidak">Bebas Sengketa</option><option value="Ya">Sedang Sengketa</option></select></div><div class="space-y-1"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Lebar Depan (min, max)</label><input type="text" id="filterLebar" placeholder="Contoh: 10, 40" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"></div><div class="space-y-1"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Panjang (min, max)</label><input type="text" id="filterPanjang" placeholder="Contoh: 20, 50" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"></div><div class="space-y-1"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Zona LSD / LBS</label><select id="filterLSD" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"><option value="">Semua Zona</option><option value="Tidak">Bebas LSD/LBS</option><option value="LSD">Zona LSD</option><option value="LBS">Zona LBS</option><option value="LSD/LBS">Zona LSD/LBS</option><option value="LP2B">Zona LP2B</option></select></div><div class="space-y-1"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pembangunan</label><select id="filterProses" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"><option value="">Semua Progress</option><option value="YA">Pembangunan Aktif</option><option value="TIDAK">Belum Mulai</option></select></div><div class="space-y-1"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Kelas Kelayakan</label><select id="filterKelayakan" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"><option value="">Semua Kelas</option><option value="LAYAK">LAYAK</option><option value="PERHATIAN">PERHATIAN</option><option value="TIDAK LAYAK">TIDAK LAYAK</option></select></div><div class="space-y-1"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Dokumen</label><input type="text" id="filterKelengkapan" placeholder="Cari: SHM, Akta, dll" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"></div><div class="space-y-1 md:col-span-2"><label class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pencarian Universal</label><div class="relative"><span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400"><i class="fas fa-search"></i></span><input type="text" id="filterText" placeholder="Masukkan kata kunci umum (nama desa, catatan)..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"></div></div></div><div class="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-slate-100 dark:border-darkBorder"><button id="resetFilter" class="px-4 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition"><i class="fas fa-undo"></i> Reset Semua Filter</button></div></div>
+                <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm overflow-hidden"><div class="rekap-table-scroll w-full"><table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-darkBorder text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] font-bold"><th class="py-4 px-4 text-center">No</th><th class="py-4 px-4">Kecamatan</th><th class="py-4 px-4">Desa</th><th class="py-4 px-4">Kepemilikan</th><th class="py-4 px-4 text-center">Sengketa</th><th class="py-4 px-4 text-center">L (m)</th><th class="py-4 px-4 text-center">P (m)</th><th class="py-4 px-4">Zona LSD/LBS</th><th class="py-4 px-4 text-center">Progres</th><th class="py-4 px-4 text-center">Kelayakan</th><th class="py-4 px-4">Dokumen</th><th class="py-4 px-4">Catatan</th><th class="py-4 px-4 text-center">Aksi</th><tr></thead><tbody id="rekapBody" class="divide-y divide-slate-100 dark:divide-darkBorder text-xs"></tbody></table></div></div>
+                <div class="bg-slate-100 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-darkBorder flex flex-wrap justify-between items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400"><div class="flex items-center gap-1.5"><i class="fas fa-layer-group text-brand-500"></i> Total Sesuai Saringan: <span id="totalCount" class="font-bold text-slate-900 dark:text-white">0</span> Lokasi</div><div class="flex gap-4 flex-wrap"><div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Layak: <span id="layakCount" class="font-bold text-slate-900 dark:text-white">0</span></div><div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Perhatian: <span id="perhatianCount" class="font-bold text-slate-900 dark:text-white">0</span></div><div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Tidak Layak: <span id="tidakLayakCount" class="font-bold text-slate-900 dark:text-white">0</span></div></div></div>
+            </div>
+
+            <!-- Peta -->
+            <div id="peta" class="page-section hidden space-y-6">
+                <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm overflow-hidden"><div class="p-6"><div id="map" class="rounded-xl overflow-hidden shadow-inner border border-slate-100 dark:border-darkBorder"></div><div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-6 border-t border-slate-100 dark:border-darkBorder"><div class="flex flex-wrap gap-2"><button id="satelliteLabelBtn" class="px-4 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition"><i class="fas fa-satellite"></i> Citra & Label</button><button id="satelliteOnlyBtn" class="px-4 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition"><i class="fas fa-images"></i> Hanya Citra Satelit</button><button id="resetViewBtn" class="px-4 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition"><i class="fas fa-crosshairs"></i> Reset Fokus Bima</button></div><div class="flex flex-wrap gap-2"><button id="refreshMapBtn" class="px-4 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg flex items-center gap-1.5 transition"><i class="fas fa-sync-alt"></i> Refresh Marka</button><button id="exportKmlBtn" class="px-4 py-2 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg flex items-center gap-1.5 transition shadow-sm"><i class="fas fa-earth-asia"></i> Ekspor KML (Google Earth)</button></div></div></div></div>
+            </div>
+
+            <!-- Log Aktivitas -->
+            <div id="log" class="page-section hidden space-y-6">
+                <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-darkBorder shadow-sm p-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div class="flex items-center gap-2"><i class="fas fa-history text-brand-500 text-lg"></i><h3 class="text-base font-bold text-slate-900 dark:text-white">Riwayat Aktivitas Pengguna</h3></div>
+                        <div class="flex gap-2">
+                            <button id="exportLogExcelBtn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm"><i class="fas fa-file-excel"></i> Ekspor Log (.xlsx)</button>
+                            <button id="clearLogBtn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center gap-2 transition shadow-sm"><i class="fas fa-trash-alt"></i> Bersihkan Log (Semua)</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div><label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Filter Tanggal (Mulai)</label><input type="date" id="logDateFrom" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"></div>
+                        <div><label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Filter Tanggal (Selesai)</label><input type="date" id="logDateTo" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"></div>
+                        <div><label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Jenis Aktivitas</label><select id="logTypeFilter" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"><option value="">Semua</option><option value="Tambah Data">Tambah Data</option><option value="Edit Data">Edit Data</option><option value="Hapus Data">Hapus Data</option><option value="Impor Data">Impor Data</option><option value="Ekspor Data">Ekspor Data</option><option value="Backup Data">Backup Data</option><option value="Restore Data">Restore Data</option><option value="Login">Login</option><option value="Hapus Log">Hapus Log</option></select></div>
+                        <div><label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pencarian</label><input type="text" id="logSearch" placeholder="Cari username, keterangan..." class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-brand-500"></div>
+                    </div>
+                    <div class="log-table-scroll w-full overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[900px]">
+                            <thead><tr class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-darkBorder text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+                                <th class="py-3 px-4">Tanggal</th><th class="py-3 px-4">Jam</th><th class="py-3 px-4">Pengguna</th><th class="py-3 px-4">Jenis Aktivitas</th><th class="py-3 px-4">Keterangan</th><th class="py-3 px-4 text-center">Aksi</th>
+                            </tr></thead>
+                            <tbody id="logTableBody" class="divide-y divide-slate-100 dark:divide-darkBorder text-xs"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="w-full max-w-none mx-auto px-4 sm:px-6 lg:px-8 py-10 border-t border-slate-200 dark:border-darkBorder text-center text-xs text-slate-400 dark:text-slate-500 space-y-2">
+            <p>© 2026 Koperasi Desa Merah Putih (KDMP) Kabupaten Bima. Seluruh hak cipta dilindungi.</p>
+            <p class="font-semibold text-[10px] uppercase tracking-wider text-slate-300 dark:text-slate-600">Aplikasi SIG Terpadu Oleh IANZ</p>
+        </footer>
+    </div>
+
+<!-- Modal Futuristik untuk Detail Data -->
+<div id="futuristicModalOverlay" class="futuristic-modal-overlay">
+    <div class="futuristic-modal">
+        <div class="futuristic-modal-header">
+            <div class="futuristic-modal-title">
+                <i class="fas fa-map-marked-alt"></i>
+                <span>Detail Lahan KDMP</span>
+            </div>
+            <button class="futuristic-modal-close" id="closeFuturisticModalBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="futuristic-modal-body" id="futuristicModalBody">
+            <!-- Konten dinamis -->
+        </div>
+        <div class="futuristic-modal-footer">
+            <button class="modal-action-btn" id="futuristicModalCloseFooter"><i class="fas fa-check-circle"></i> Tutup</button>
+        </div>
+    </div>
+</div>
+    <script type="module">
+        // ==================== MODAL FUTURISTIK ====================
+const modalOverlay = document.getElementById('futuristicModalOverlay');
+const modalBody = document.getElementById('futuristicModalBody');
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+window.showDetailModal = function(id) {
+    const item = locations.find(l => l.id == id);
+    if (!item) return;
+
+    const kelayakan = analisisKelayakan(item);
+    let badgeClass = '';
+    let badgeText = '';
+    if (kelayakan === 'LAYAK') {
+        badgeClass = 'kelayakan-badge';
+        badgeText = 'LAYAK';
+    } else if (kelayakan === 'PERHATIAN') {
+        badgeClass = 'kelayakan-badge perhatian';
+        badgeText = 'PERHATIAN';
+    } else {
+        badgeClass = 'kelayakan-badge tidak-layak';
+        badgeText = 'TIDAK LAYAK';
+    }
+
+    const luas = (item.lebarDepan && item.panjang) ? (item.lebarDepan * item.panjang).toLocaleString() + ' m²' : '-';
+    const lebar = item.lebarDepan ? item.lebarDepan + ' m' : '-';
+    const panjang = item.panjang ? item.panjang + ' m' : '-';
+
+    const html = `
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-city"></i></div><div class="detail-content"><div class="detail-label">Kecamatan</div><div class="detail-value">${escapeHtml(item.kecamatan)}</div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-tree"></i></div><div class="detail-content"><div class="detail-label">Desa / Kelurahan</div><div class="detail-value">${escapeHtml(item.desa)}</div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-landmark"></i></div><div class="detail-content"><div class="detail-label">Kepemilikan Lahan</div><div class="detail-value">${escapeHtml(item.kepemilikan || '-')}</div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-gavel"></i></div><div class="detail-content"><div class="detail-label">Status Sengketa</div><div class="detail-value">${item.bersengketa === 'Ya' ? '<span style="color:#ef4444">Ya (Sedang Sengketa)</span>' : 'Tidak'}</div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-ruler-horizontal"></i></div><div class="detail-content"><div class="detail-label">Lebar Depan</div><div class="detail-value">${lebar}</div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-ruler-vertical"></i></div><div class="detail-content"><div class="detail-label">Panjang Kebelakang</div><div class="detail-value">${panjang}</div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-arrows-alt"></i></div><div class="detail-content"><div class="detail-label">Total Luas</div><div class="detail-value">${luas}</div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="detail-content"><div class="detail-label">Zona LSD/LBS/LP2B</div><div class="detail-value">${escapeHtml(item.lsdStatus || 'Tidak')}</div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-building"></i></div><div class="detail-content"><div class="detail-label">Proses Pembangunan</div><div class="detail-value">${item.prosesBangun === 'YA' ? '<span style="color:#6366f1">Dalam Pembangunan (YA)</span>' : 'Belum Proses (TIDAK)'}</div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-chart-line"></i></div><div class="detail-content"><div class="detail-label">Kelayakan Lahan</div><div class="detail-value"><span class="${badgeClass}">${badgeText}</span></div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-file-signature"></i></div><div class="detail-content"><div class="detail-label">Kelengkapan Dokumen</div><div class="detail-value">${escapeHtml(item.kelengkapanDokumen || '-')}</div></div></div>
+            <div class="detail-item"><div class="detail-icon"><i class="fas fa-map-pin"></i></div><div class="detail-content"><div class="detail-label">Koordinat (Lat, Lng)</div><div class="detail-value">${escapeHtml(item.koordinat || '-')}</div></div></div>
+            <div class="detail-item" style="grid-column: span 2;"><div class="detail-icon"><i class="fas fa-info-circle"></i></div><div class="detail-content"><div class="detail-label">Catatan Khusus</div><div class="detail-value" style="font-style:italic">${escapeHtml(item.keterangan || 'Tidak ada catatan')}</div></div></div>
+        </div>
+    `;
+
+    modalBody.innerHTML = html;
+    modalOverlay.classList.add('active');
+
+    // Event menutup modal
+    const closeModal = () => modalOverlay.classList.remove('active');
+    document.getElementById('closeFuturisticModalBtn').onclick = closeModal;
+    document.getElementById('futuristicModalCloseFooter').onclick = closeModal;
+    modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(); };
+};
+        // ==================== KONFIGURASI FIREBASE ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCOmBD0GIxPkMRDmC1hYhW614K-zZQM_so",
+            authDomain: "kdmpbima.firebaseapp.com",
+            projectId: "kdmpbima",
+            storageBucket: "kdmpbima.firebasestorage.app",
+            messagingSenderId: "494873142775",
+            appId: "1:494873142775:web:a3201c156696e31dd7baf2"
+        };
+
+        const app = window.FirebaseSDK.initializeApp(firebaseConfig);
+        const auth = window.FirebaseSDK.getAuth(app);
+        const db = window.FirebaseSDK.getFirestore(app);
+
+        // Set persistence agar tetap login setelah refresh
+        window.FirebaseSDK.setPersistence(auth, window.FirebaseSDK.browserLocalPersistence);
+
+        let currentUser = null;
+        let locations = [];
+        let activityLogs = [];
+        let unsubscribeLahan = null;
+        let map, markersLayer, currentTileLayer;
+        let chartKelayakan, chartProses, chartPerbandingan, chartKepemilikan;
+
+        // Data statis
+        const kecamatanDesaData = {
+            "Ambalawi": ["Kole","Mawu","Nipa","Rite","Talapiti","Tolowata"],
+            "Belo": ["Diha","Cenggu","Lido","Ncera","Ngali","Renda","Roka","Runggu","Soki"],
+            "Bolo": ["Bontokape","Darussalam","Kananga","Kara","Leu","Nggembe","Rada","Rasabau","Rato","Sanolo","Sondosia","Tambe","Timu","Tumpu"],
+            "Donggo": ["Bumi Pajo","Doridungga","Kala","Mbawa","Mpili","Ndano Na'e","O'o","Palama","Rora"],
+            "Lambitu": ["Kaboro","Kaowa","Kuta","Londu","Sambori","Teta"],
+            "Lambu": ["Hidirasa","Kaleo","Lambu","Lanta","Lanta Barat","Mangge","Melayu","Monta Baru","Nggelu","Rato","Sangga","Simpasai","Soro","Sumi"],
+            "Langgudu": ["Doro O'o","Dumu","Kalodu","Kangga","Karampi","Karumbu","Kawuwu","Laju","Pusu","Rompo","Rupe","Sambane","Sarae Ruma","Wadu Ruka","Waworada"],
+            "Madapangga": ["Bolo","Campa","Dena","Mandawau","Monggo","Mpuri","Ncandi","Ndano","Rade","Tonda","Woro"],
+            "Monta": ["Baralau","Monta","Nontotera","Pela","Sekuru","Sie","Simpasai","Sondo","Tangga","Tangga Baru","Tolotangga","Tolouwi","Waro","Willamaci"],
+            "Palibelo": ["Belo","Bre","Dore","Nata","Ntonggu","Panda","Padolo","Ragi","Roi","Teke","Tolongondoa","Tonggorisa"],
+            "Parado": ["Kanca","Kuta","Lere","Paradorato","Paradowane"],
+            "Sanggar": ["Boro","Kore","Oi Saro","Piong","Sandue","Taloko"],
+            "Sape": ["Bajo Pulau","Boke","Bugis","Buncu","Jia","Kowo","Lamere","Nae","Naru Barat","Naru Timur","Oi Maci","Parangina","Poja","Rai Oi","Rasabou","Sangia","Sari","Tanah Putih"],
+            "Soromandi": ["Bajo","Kananta","Lewintana","Punti","Sai","Sampungu","Wadukopa"],
+            "Tambora": ["Kawinda Nae","Kawinda Toi","Labuhan Kananga","Oi Bura","Oi Katupa","Oi Panihi","Rasabou"],
+            "Wawo": ["Kambilo","Kombo","Maria","Maria Utara","Ntori","Pesa","Raba","Riamau","Tarlawi"],
+            "Wera": ["Bala","Hidirasa","Kalajena","Mandala","Nanga Wera","Ntoke","Nunggi","Oitui","Pai","Ranggasolo","Sangiang","Tadewa","Tawali","Wora"],
+            "Woha": ["Dadibou","Donggobolo","Kalampa","Keli","Naru","Nisa","Pandai","Penapali","Rabakodo","Risa","Samili","Talabiu","Tenga","Tente","Waduwani"]
+        };
+        const daftarKepemilikanLahan = ["Lahan Desa","Lahan Pemda","Lahan Provinsi","Lahan Masyarakat","Lahan Desa/ Lahan Masyarakat","Lahan Desa/ Lahan Pemda","Lahan Masyarakat/ Lahan Pemda","Lahan KUD","Barang Milik Negara","Lahan Yayasan","Tidak Ada Lokasi"];
+
+        function analisisKelayakan(item) {
+            if (item.kepemilikan === "Tidak Ada Lokasi") return "TIDAK LAYAK";
+            if (item.bersengketa === "Ya") return "PERHATIAN";
+            if (item.lsdStatus && item.lsdStatus !== "Tidak") return "PERHATIAN";
+            let l = item.lebarDepan || 0, p = item.panjang || 0;
+            if (l >= 30 && p >= 20 && (l * p) >= 600) return "LAYAK";
+            return "PERHATIAN";
+        }
+
+        async function showSuccess(title, text, timer = 1200) { await Swal.fire({ title, text, icon: 'success', timer, showConfirmButton: false, customClass: { popup: 'swal-kecil' } }); }
+        async function showError(title, text) { await Swal.fire({ title, text, icon: 'error', confirmButtonText: 'OK', customClass: { popup: 'swal-kecil' } }); }
+        async function showInfo(title, text, timer = 1500) { await Swal.fire({ title, text, icon: 'info', timer, showConfirmButton: false, customClass: { popup: 'swal-kecil' } }); }
+        async function showConfirm(title, text, confirmText = "Ya", cancelText = "Batal") {
+            const result = await Swal.fire({ title, text, icon: 'question', showCancelButton: true, confirmButtonText: confirmText, cancelButtonText: cancelText, customClass: { popup: 'swal-kecil' } });
+            return result.isConfirmed;
+        }
+
+        async function logActivity(jenis, keterangan) {
+            if (!currentUser) return;
+            const now = new Date();
+            const tanggalWaktu = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+            try {
+                await window.FirebaseSDK.addDoc(window.FirebaseSDK.collection(db, "activity_logs"), {
+                    tanggalWaktu, namaPengguna: currentUser.namaPengguna, akun: currentUser.email,
+                    level: currentUser.level, aktivitas: `${jenis}: ${keterangan}`, timestamp: now.toISOString()
+                });
+            } catch(e) { console.warn(e); }
+        }
+
+        // CRUD dengan pengecekan hak akses
+        async function saveLocation(data, editId) {
+            if (currentUser?.level === 'pengguna') { showError("Akses Ditolak", "Anda tidak memiliki izin."); return; }
+            try {
+                if (editId) {
+                    await window.FirebaseSDK.updateDoc(window.FirebaseSDK.doc(db, "lahan_kdmp", editId), data);
+                    await logActivity("Edit Data", `Mengedit data lahan ID:${editId} (${data.desa}, ${data.kecamatan})`);
+                } else {
+                    await window.FirebaseSDK.addDoc(window.FirebaseSDK.collection(db, "lahan_kdmp"), data);
+                    await logActivity("Tambah Data", `Menambah data lahan baru: ${data.desa}, ${data.kecamatan}`);
+                }
+                showSuccess("Berhasil", editId ? "Data diperbarui" : "Data ditambahkan");
+            } catch(e) { showError("Gagal", e.message); }
+        }
+
+        async function deleteLocation(id) {
+            if (currentUser?.level === 'pengguna') { showError("Akses Ditolak", "Anda tidak bisa menghapus."); return; }
+            let item = locations.find(l => l.id == id);
+            if (!item || !(await showConfirm("Hapus Data?", `Hapus ${item.desa}, ${item.kecamatan}?`))) return;
+            try {
+                await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(db, "lahan_kdmp", id));
+                await logActivity("Hapus Data", `Menghapus data lahan ID:${id} (${item.desa})`);
+                showSuccess("Berhasil", "Data dihapus");
+            } catch(e) { showError("Gagal", e.message); }
+        }
+
+        // ==================== RENDER FUNCTIONS ====================
+        function renderBeranda() {
+            let total=locations.length, proses=locations.filter(l=>l.prosesBangun==="YA").length, layak=locations.filter(l=>analisisKelayakan(l)==="LAYAK").length, perhatian=locations.filter(l=>analisisKelayakan(l)==="PERHATIAN").length, tidakLayak=locations.filter(l=>analisisKelayakan(l)==="TIDAK LAYAK").length;
+            document.getElementById("statsContainer").innerHTML = `
+                <div class="stat-card cursor-pointer bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-5 rounded-2xl border border-emerald-500/20 flex flex-col justify-between transition-all" data-filter="layak"><span class="text-xs font-bold uppercase tracking-wider">Layak</span><span class="text-3xl font-extrabold mt-3 leading-none">${layak}</span></div>
+                <div class="stat-card cursor-pointer bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 p-5 rounded-2xl border border-amber-500/20 flex flex-col justify-between transition-all" data-filter="perhatian"><span class="text-xs font-bold uppercase tracking-wider">Perhatian</span><span class="text-3xl font-extrabold mt-3 leading-none">${perhatian}</span></div>
+                <div class="stat-card cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 p-5 rounded-2xl border border-rose-500/20 flex flex-col justify-between transition-all" data-filter="tidak"><span class="text-xs font-bold uppercase tracking-wider">Tidak Layak</span><span class="text-3xl font-extrabold mt-3 leading-none">${tidakLayak}</span></div>
+                <div class="stat-card cursor-pointer bg-violet-500/10 hover:bg-violet-500/20 text-violet-600 dark:text-violet-400 p-5 rounded-2xl border border-violet-500/20 flex flex-col justify-between transition-all" data-filter="proses"><span class="text-xs font-bold uppercase tracking-wider">Pembangunan</span><span class="text-3xl font-extrabold mt-3 leading-none">${proses}</span></div>
+                <div class="stat-card bg-slate-500/10 text-slate-600 dark:text-slate-400 p-5 rounded-2xl border border-slate-500/20 flex flex-col justify-between transition-all"><span class="text-xs font-bold uppercase tracking-wider">Total Lahan</span><span class="text-3xl font-extrabold mt-3 leading-none">${total}</span></div>
+            `;
+            document.querySelectorAll("#statsContainer .stat-card[data-filter]").forEach(card => card.addEventListener("click", () => applyFilterAndGoToRekap(card.getAttribute("data-filter"))));
+            let kategoriMap = new Map();
+            locations.forEach(l => { let kat = l.kepemilikan || "Lahan Desa"; kategoriMap.set(kat, (kategoriMap.get(kat) || 0) + 1); });
+            document.getElementById("kategoriList").innerHTML = Array.from(kategoriMap).map(([k,v]) => `<button class="kategori-btn px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-700" data-kategori="${k}"><i class="fas fa-tag"></i> ${k} <span class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] px-1.5 py-0.5 rounded-full">${v}</span></button>`).join("");
+            document.querySelectorAll("#kategoriList .kategori-btn").forEach(btn => btn.addEventListener("click", () => filterByKepemilikan(btn.getAttribute("data-kategori"))));
+            renderCharts(layak, perhatian, tidakLayak, proses, total);
+        }
+
+        function renderCharts(layak, perhatian, tidakLayak, proses, total){
+            const isDark=document.documentElement.classList.contains('dark'), textColor=isDark?'#94a3b8':'#64748b', gridColor=isDark?'#334155':'#e2e8f0';
+            if(chartKelayakan) chartKelayakan.destroy(); chartKelayakan=new Chart(document.getElementById("chartKelayakan").getContext("2d"),{type:'doughnut',data:{labels:['Layak','Perhatian','Tidak Layak'],datasets:[{data:[layak,perhatian,tidakLayak],backgroundColor:['#10b981','#f59e0b','#ef4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:textColor,font:{size:11}}}}}});
+            if(chartProses) chartProses.destroy(); chartProses=new Chart(document.getElementById("chartProses").getContext("2d"),{type:'pie',data:{labels:['Proses (YA)','Belum (TIDAK)'],datasets:[{data:[proses,total-proses],backgroundColor:['#6366f1','#94a3b8'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:textColor,font:{size:11}}}}}});
+            let kepMap=new Map(); locations.forEach(l=>{ if(l.kepemilikan!=="Tidak Ada Lokasi") kepMap.set(l.kepemilikan,(kepMap.get(l.kepemilikan)||0)+1); });
+            if(chartKepemilikan) chartKepemilikan.destroy(); chartKepemilikan=new Chart(document.getElementById("chartKepemilikan").getContext("2d"),{type:'polarArea',data:{labels:Array.from(kepMap.keys()),datasets:[{data:Array.from(kepMap.values()),backgroundColor:['#3b82f6','#10b981','#f59e0b','#ec4899','#8b5cf6','#06b6d4'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{grid:{color:gridColor},ticks:{backdropColor:'transparent',color:textColor}}},plugins:{legend:{position:'bottom',labels:{color:textColor,font:{size:9}}}}}});
+            let kecList=Object.keys(kecamatanDesaData).sort(), jmlDesa=kecList.map(k=>kecamatanDesaData[k].length), jmlLahan=kecList.map(k=>locations.filter(l=>l.kecamatan===k&&l.kepemilikan!=="Tidak Ada Lokasi").length);
+            if(chartPerbandingan) chartPerbandingan.destroy(); chartPerbandingan=new Chart(document.getElementById("chartPerbandingan").getContext("2d"),{type:'bar',data:{labels:kecList,datasets:[{label:'Jumlah Desa',data:jmlDesa,backgroundColor:'#3b82f6',borderRadius:6},{label:'Lahan KDMP Terdata',data:jmlLahan,backgroundColor:'#ef4444',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{grid:{display:false},ticks:{color:textColor,rotation:-45}},y:{grid:{color:gridColor},ticks:{color:textColor,stepSize:1}}},plugins:{legend:{position:'top',labels:{color:textColor,font:{size:11}}}}}});
+        }
+
+        function renderRekap(){
+            let filtered = [...locations];
+            let kec=document.getElementById("filterKecamatan").value, desa=document.getElementById("filterDesa").value, kep=document.getElementById("filterKepemilikan").value, seng=document.getElementById("filterSengketa").value, lsd=document.getElementById("filterLSD").value, proses=document.getElementById("filterProses").value, kel=document.getElementById("filterKelayakan").value, dok=document.getElementById("filterKelengkapan").value.trim().toLowerCase(), lebarText=document.getElementById("filterLebar").value.trim(), panjangText=document.getElementById("filterPanjang").value.trim(), search=document.getElementById("filterText").value.trim().toLowerCase();
+            if(kec) filtered=filtered.filter(l=>l.kecamatan===kec); if(desa) filtered=filtered.filter(l=>l.desa===desa); if(kep) filtered=filtered.filter(l=>l.kepemilikan===kep); if(seng) filtered=filtered.filter(l=>l.bersengketa===seng); if(lsd) filtered=filtered.filter(l=>(l.lsdStatus||"Tidak")===lsd); if(proses) filtered=filtered.filter(l=>l.prosesBangun===proses); if(kel) filtered=filtered.filter(l=>analisisKelayakan(l)===kel); if(dok) filtered=filtered.filter(l=>(l.kelengkapanDokumen||"").toLowerCase().includes(dok));
+            if(lebarText){ let parts=lebarText.split(","), min=parseFloat(parts[0]), max=parts[1]?parseFloat(parts[1]):Infinity; filtered=filtered.filter(l=>(l.lebarDepan||0)>=min&&(l.lebarDepan||0)<=max); }
+            if(panjangText){ let parts=panjangText.split(","), min=parseFloat(parts[0]), max=parts[1]?parseFloat(parts[1]):Infinity; filtered=filtered.filter(l=>(l.panjang||0)>=min&&(l.panjang||0)<=max); }
+            if(search) filtered=filtered.filter(l=>l.kecamatan.toLowerCase().includes(search)||l.desa.toLowerCase().includes(search)||l.kepemilikan.toLowerCase().includes(search)||(l.keterangan||"").toLowerCase().includes(search));
+            filtered.sort((a,b)=>a.kecamatan.localeCompare(b.kecamatan)||a.desa.localeCompare(b.desa));
+            const tbody=document.getElementById("rekapBody"); let html="";
+            filtered.forEach((item,idx)=>{ let sts=analisisKelayakan(item); let badgeKelayakan=sts==="LAYAK"?`<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">LAYAK</span>`:sts==="PERHATIAN"?`<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">PERHATIAN</span>`:`<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">TIDAK LAYAK</span>`;
+            const actionButtons = (currentUser?.level !== 'pengguna') ? `<div class="flex items-center justify-center gap-1.5"><button onclick="editData('${item.id}')" class="p-1.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 text-amber-600 dark:text-amber-400 rounded-lg transition"><i class="fas fa-edit text-sm"></i></button><button onclick="deleteLocation('${item.id}')" class="p-1.5 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 text-rose-600 dark:text-rose-400 rounded-lg transition"><i class="fas fa-trash text-sm"></i></button></div>` : '';
+            html+=`<tr data-id="${item.id}"><td class="py-3 px-4 text-center">${idx+1}</td><td class="py-3 px-4 font-semibold">${item.kecamatan}</td><td class="py-3 px-4 font-semibold">${item.desa}</td><td class="py-3 px-4">${item.kepemilikan}</td><td class="py-3 px-4 text-center">${item.bersengketa==="Ya"?`<span class="text-rose-500">Ya</span>`:'Tidak'}</td><td class="py-3 px-4 text-center">${item.lebarDepan||'-'}</td><td class="py-3 px-4 text-center">${item.panjang||'-'}</td><td class="py-3 px-4">${item.lsdStatus!=='Tidak'?`<span class="text-amber-500 font-bold">${item.lsdStatus}</span>`:'Tidak'}</td><td class="py-3 px-4 text-center">${item.prosesBangun==="YA"?`<span class="text-indigo-500">YA</span>`:'TIDAK'}</td><td class="py-3 px-4 text-center">${badgeKelayakan}</td><td class="py-3 px-4">${item.kelengkapanDokumen||'-'}</td><td class="py-3 px-4 rekap-note-cell">${item.keterangan||'-'}</td><td class="py-3 px-4 text-center"><div class="flex items-center justify-center gap-1.5"><button onclick="showDetailModal('${item.id}')" class="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg"><i class="fas fa-eye text-sm"></i></button><button onclick="viewOnMap('${item.kecamatan}','${item.desa}','${item.koordinat||''}')" class="p-1.5 bg-sky-50 dark:bg-sky-500/10 rounded-lg"><i class="fas fa-map-marked-alt text-sm"></i></button>${actionButtons}</div></td></tr>`; });
+            tbody.innerHTML=html||`<tr><td colspan="13" class="py-8 text-center">Tidak ada data</td></tr>`;
+            let layak=filtered.filter(l=>analisisKelayakan(l)==="LAYAK").length, perhatian=filtered.filter(l=>analisisKelayakan(l)==="PERHATIAN").length, tidak=filtered.filter(l=>analisisKelayakan(l)==="TIDAK LAYAK").length;
+            document.getElementById("totalCount").innerText=filtered.length; document.getElementById("layakCount").innerText=layak; document.getElementById("perhatianCount").innerText=perhatian; document.getElementById("tidakLayakCount").innerText=tidak;
+        }
+
+        function applyFilterAndGoToRekap(filterType){
+            document.getElementById("filterKelayakan").value = filterType === "layak" ? "LAYAK" : filterType === "perhatian" ? "PERHATIAN" : filterType === "tidak" ? "TIDAK LAYAK" : "";
+            if(filterType === "proses") document.getElementById("filterProses").value = "YA";
+            renderRekap(); triggerNavTab("rekap");
+        }
+        function filterByKepemilikan(kategori){ document.getElementById("filterKepemilikan").value = kategori; renderRekap(); triggerNavTab("rekap"); }
+        function renderAll() { renderBeranda(); renderRekap(); if(map) refreshMap(); }
+
+        // Map
+        function initMap() { if(map) return; map=L.map('map').setView([-8.45,118.72],10); currentTileLayer=L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{subdomains:['mt0','mt1','mt2','mt3'],maxZoom:20}).addTo(map); markersLayer=L.layerGroup().addTo(map); refreshMap(); }
+        function refreshMap() { if(!markersLayer) return; markersLayer.clearLayers(); locations.forEach(loc=>{ let coord=parseCoordinates(loc.koordinat); if(coord){ let color=analisisKelayakan(loc)==="LAYAK"?"#10b981":analisisKelayakan(loc)==="PERHATIAN"?"#f59e0b":"#ef4444"; let icon=L.divIcon({className:'kdmp-static-marker',html:`<div class="flex items-center justify-center w-6 h-6"><span class="inline-flex rounded-full w-4 h-4 border-[3px] border-white shadow-md shadow-black/30" style="background-color:${color}"></span></div>`,iconSize:[24,24]}); L.marker(coord,{icon}).bindPopup(`<b>${loc.desa}, ${loc.kecamatan}</b><br>Status: ${analisisKelayakan(loc)}`).addTo(markersLayer); } }); }
+        function parseCoordinates(str){ if(!str||!str.includes(",")) return null; let parts=str.split(","), lat=parseFloat(parts[0].trim()), lng=parseFloat(parts[1].trim()); return (!isNaN(lat)&&!isNaN(lng))?[lat,lng]:null; }
+        window.viewOnMap = function(kec,desa,coordStr){ let coord=parseCoordinates(coordStr); if(!coord){ showError("Error","Koordinat tidak valid"); return; } triggerNavTab("peta"); setTimeout(()=>{ if(map){ map.flyTo(coord,16); L.popup().setLatLng(coord).setContent(`<b>${desa}, ${kec}</b>`).openOn(map); } },250); };
+        function triggerNavTab(pageId){
+            document.querySelectorAll(".page-section").forEach(sec=>{
+                if(sec.id===pageId) sec.classList.remove("hidden");
+                else sec.classList.add("hidden");
+            });
+            document.querySelectorAll(".nav-btn").forEach(btn=>{
+                let isActive=btn.getAttribute("data-page")===pageId;
+                if(isActive){
+                    btn.className="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition bg-brand-500 text-white shadow-sm";
+                } else {
+                    btn.className="nav-btn px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
+                }
+            });
+            if(pageId==="peta") setTimeout(()=>{ if(map) map.invalidateSize(); else initMap(); refreshMap(); },100);
+            if(pageId==="log") renderLogPage();
+        }
+
+        // Log page
+        function renderLogPage(){
+            const tbody = document.getElementById("logTableBody");
+            if(!tbody) return;
+            let logs = [...activityLogs];
+            const dateFrom = document.getElementById("logDateFrom")?.value;
+            const dateTo = document.getElementById("logDateTo")?.value;
+            const typeFilter = document.getElementById("logTypeFilter")?.value;
+            const search = document.getElementById("logSearch")?.value.toLowerCase();
+            if(dateFrom) logs = logs.filter(l => l.tanggalWaktu?.split(' ')[0] >= dateFrom);
+            if(dateTo) logs = logs.filter(l => l.tanggalWaktu?.split(' ')[0] <= dateTo);
+            if(typeFilter) logs = logs.filter(l => l.aktivitas?.includes(typeFilter));
+            if(search) logs = logs.filter(l => l.namaPengguna?.toLowerCase().includes(search) || l.aktivitas?.toLowerCase().includes(search));
+            logs.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+            tbody.innerHTML = logs.map(l=>`<tr><td class="py-3 px-4">${l.tanggalWaktu?.split(' ')[0]||''}</td><td class="py-3 px-4">${l.tanggalWaktu?.split(' ')[1]||''}</td><td class="py-3 px-4">${l.namaPengguna}</td><td class="py-3 px-4">${l.aktivitas?.split(':')[0]||''}</td><td class="py-3 px-4">${l.aktivitas}</td><td class="py-3 px-4 text-center"><button onclick="deleteSingleLog('${l.id}')" class="text-rose-500"><i class="fas fa-trash"></i></button></td></tr>`).join("");
+        }
+        window.deleteSingleLog = async (id) => { if(currentUser?.level !== 'superadmin') return; await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(db, "activity_logs", id)); renderLogPage(); };
+
+        // Event handlers
+        document.getElementById("locationForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            if (currentUser?.level === 'pengguna') { showError("Akses Ditolak", "Anda tidak memiliki izin."); return; }
+            let editId = document.getElementById("editIndex").value;
+            let data = {
+                kecamatan: document.getElementById("kecamatan").value, desa: document.getElementById("desa").value,
+                kepemilikan: document.getElementById("kepemilikan").value, bersengketa: document.getElementById("sengketa").value,
+                lebarDepan: document.getElementById("lebar").value ? parseFloat(document.getElementById("lebar").value) : null,
+                panjang: document.getElementById("panjang").value ? parseFloat(document.getElementById("panjang").value) : null,
+                lsdStatus: document.getElementById("lsd").value, prosesBangun: document.getElementById("prosesBangun").value,
+                koordinat: document.getElementById("koordinat").value, kelengkapanDokumen: document.getElementById("kelengkapanDokumen").value,
+                keterangan: document.getElementById("keterangan").value
+            };
+            await saveLocation(data, editId !== "-1" ? editId : null);
+            if (editId !== "-1") { clearForm(); triggerNavTab("rekap"); highlightEditedData(editId); } else clearForm();
+        });
+        function clearForm() { document.getElementById("editIndex").value = "-1"; document.getElementById("locationForm").reset(); document.getElementById("desa").disabled = true; document.getElementById("desa").innerHTML = '<option value="">Pilih Kecamatan dulu</option>'; document.getElementById("formStatus").innerHTML = "Form Entri Lokasi Baru"; document.getElementById("cancelEditBtn").classList.add("hidden"); }
+        window.editData = function(id) { if (currentUser?.level === 'pengguna') return; let item = locations.find(l => l.id == id); if(!item) return; document.getElementById("editIndex").value = id; document.getElementById("kecamatan").value = item.kecamatan; document.getElementById("kecamatan").dispatchEvent(new Event('change')); setTimeout(()=>{document.getElementById("desa").value = item.desa;},80); document.getElementById("kepemilikan").value = item.kepemilikan; document.getElementById("sengketa").value = item.bersengketa; document.getElementById("lebar").value = item.lebarDepan || ""; document.getElementById("panjang").value = item.panjang || ""; document.getElementById("lsd").value = item.lsdStatus || "Tidak"; document.getElementById("prosesBangun").value = item.prosesBangun; document.getElementById("koordinat").value = item.koordinat || ""; document.getElementById("kelengkapanDokumen").value = item.kelengkapanDokumen || ""; document.getElementById("keterangan").value = item.keterangan || ""; document.getElementById("formStatus").innerHTML = `Form Edit Data Lahan - ${item.desa}`; document.getElementById("cancelEditBtn").classList.remove("hidden"); triggerNavTab("master"); window.scrollTo({ top: 120, behavior: 'smooth' }); };
+        window.deleteLocation = deleteLocation;
+        function highlightEditedData(editedId) { setTimeout(()=>{ const row = document.querySelector(`#rekapBody tr[data-id="${editedId}"]`); if(row){ row.classList.add("highlight-row"); row.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(()=>row.classList.remove("highlight-row"),2000); } },200); }
+        window.closeDetailModal = () => Swal.close();
+
+        // ==================== LOGIN & AUTH STATE ====================
+        const loginContainer = document.getElementById("loginContainer");
+        const appContent = document.getElementById("appContent");
+        const loginForm = document.getElementById("loginForm");
+        const loginError = document.getElementById("loginError");
+
+        // Fungsi untuk menampilkan aplikasi setelah login berhasil
+        function showApp(userData) {
+            currentUser = userData;
+            loginContainer.style.display = "none";
+            appContent.style.display = "block";
+            document.getElementById("userDisplayName").innerText = `Login sebagai: ${currentUser.namaPengguna}`;
+            document.getElementById("accessBadge").innerText = `Akses: ${currentUser.level === 'superadmin' ? 'Superadmin' : currentUser.level === 'admin' ? 'Admin' : 'Pengguna'}`;
+            const logNavBtn = document.getElementById("logNavBtn");
+            if (currentUser.level !== 'superadmin') logNavBtn.style.display = "none";
+            else logNavBtn.style.display = "flex";
+            if (currentUser.level === 'pengguna') {
+                document.body.classList.add("pengguna-mode");
+                document.getElementById("submitFormBtn").style.display = "none";
+                document.getElementById("clearFormBtn").style.display = "none";
+                document.getElementById("cancelEditBtn").style.display = "none";
+                document.getElementById("backupToLocalBtn").style.display = "none";
+                document.getElementById("restoreFromLocalBtn").style.display = "none";
+                document.getElementById("importExcelBtn").style.display = "none";
+            } else {
+                document.body.classList.remove("pengguna-mode");
+                document.getElementById("submitFormBtn").style.display = "flex";
+                document.getElementById("clearFormBtn").style.display = "flex";
+                document.getElementById("backupToLocalBtn").style.display = "flex";
+                document.getElementById("restoreFromLocalBtn").style.display = "flex";
+                document.getElementById("importExcelBtn").style.display = "flex";
+            }
+            // Subscribe ke data lahan
+            const qLahan = window.FirebaseSDK.query(window.FirebaseSDK.collection(db, "lahan_kdmp"));
+            if (unsubscribeLahan) unsubscribeLahan();
+            unsubscribeLahan = window.FirebaseSDK.onSnapshot(qLahan, (snapshot) => { locations = []; snapshot.forEach(docSnap => locations.push({ id: docSnap.id, ...docSnap.data() })); renderAll(); });
+            // Subscribe log aktivitas
+            const qLogs = window.FirebaseSDK.query(window.FirebaseSDK.collection(db, "activity_logs"));
+            window.FirebaseSDK.onSnapshot(qLogs, (snap) => { activityLogs = []; snap.forEach(d => activityLogs.push({ id: d.id, ...d.data() })); if(document.getElementById("log") && !document.getElementById("log").classList.contains("hidden")) renderLogPage(); });
+            triggerNavTab("beranda");
+        }
+
+        // Firebase Auth state listener (menjaga session setelah refresh)
+        window.FirebaseSDK.onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User sudah login (session tersimpan)
+                const userDoc = await window.FirebaseSDK.getDoc(window.FirebaseSDK.doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    showApp({ uid: user.uid, email: user.email, level: userData.level, namaPengguna: userData.namaPengguna });
+                } else {
+                    // Akun tidak valid, logout
+                    await window.FirebaseSDK.signOut(auth);
+                    loginContainer.style.display = "flex";
+                    appContent.style.display = "none";
+                }
+            } else {
+                // Belum login, tampilkan login screen
+                loginContainer.style.display = "flex";
+                appContent.style.display = "none";
+                if (unsubscribeLahan) unsubscribeLahan();
+            }
+        });
+
+        // Login form submission
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
+            loginError.innerText = "";
+            try {
+                const userCred = await window.FirebaseSDK.signInWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged akan menangani selanjutnya
+            } catch(err) {
+                loginError.innerText = "Akun atau Password tidak valid.";
+            }
+        });
+
+        // Logout
+        document.getElementById("logoutBtn").addEventListener("click", async () => {
+            if (currentUser) await logActivity("Logout", `Pengguna ${currentUser.namaPengguna} keluar`);
+            await window.FirebaseSDK.signOut(auth);
+        });
+
+        // Populate dropdowns & event listeners lainnya
+        function populateFormsDropdowns(){
+            const kecSelect=document.getElementById("kecamatan"); kecSelect.innerHTML='<option value="">Pilih Kecamatan</option>';
+            Object.keys(kecamatanDesaData).sort().forEach(k=>kecSelect.innerHTML+=`<option value="${k}">${k}</option>`);
+            kecSelect.addEventListener("change",function(){ const desaSelect=document.getElementById("desa"); if(this.value&&kecamatanDesaData[this.value]){ desaSelect.innerHTML='<option value="">Pilih Desa</option>'+kecamatanDesaData[this.value].map(d=>`<option value="${d}">${d}</option>`).join(''); desaSelect.disabled=false; } else { desaSelect.innerHTML='<option value="">Pilih Kecamatan dulu</option>'; desaSelect.disabled=true; } });
+            document.getElementById("kepemilikan").innerHTML=daftarKepemilikanLahan.map(k=>`<option value="${k}">${k}</option>`).join('');
+            const filterKec=document.getElementById("filterKecamatan"); filterKec.innerHTML='<option value="">Semua Kecamatan</option>'+Object.keys(kecamatanDesaData).sort().map(k=>`<option value="${k}">${k}</option>`).join('');
+            filterKec.addEventListener("change",()=>{ let kec=filterKec.value, desaSelect=document.getElementById("filterDesa"); if(kec&&kecamatanDesaData[kec]) desaSelect.innerHTML='<option value="">Semua Desa</option>'+kecamatanDesaData[kec].map(d=>`<option value="${d}">${d}</option>`).join(''); else desaSelect.innerHTML='<option value="">Semua Desa</option>'; });
+            document.getElementById("filterKepemilikan").innerHTML='<option value="">Semua Kepemilikan</option>'+daftarKepemilikanLahan.map(k=>`<option value="${k}">${k}</option>`).join('');
+            document.getElementById("filterSengketa").innerHTML='<option value="">Semua</option><option value="Tidak">Bebas Sengketa</option><option value="Ya">Sedang Sengketa</option>';
+            ["filterKecamatan","filterDesa","filterKepemilikan","filterSengketa","filterLSD","filterProses","filterKelayakan","filterKelengkapan","filterLebar","filterPanjang"].forEach(id=>document.getElementById(id)?.addEventListener("change",renderRekap));
+            document.getElementById("filterText")?.addEventListener("keyup",renderRekap);
+            document.getElementById("resetFilter")?.addEventListener("click",()=>{ document.querySelectorAll("#filterPanel select, #filterPanel input").forEach(el=>el.value=""); renderRekap(); document.getElementById("filterPanel").classList.add("hidden"); });
+            document.getElementById("toggleFilterPanel")?.addEventListener("click",()=>{ let p=document.getElementById("filterPanel"); p.classList.toggle("hidden"); document.getElementById("toggleFilterText").innerText=p.classList.contains("hidden")?"Tampilkan Filter":"Sembunyikan Filter"; });
+            document.getElementById("themeToggle").addEventListener("click",()=>{ document.documentElement.classList.toggle("dark"); renderAll(); });
+            document.getElementById("satelliteLabelBtn")?.addEventListener("click",()=>{ if(map){ if(currentTileLayer) map.removeLayer(currentTileLayer); currentTileLayer=L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{subdomains:['mt0','mt1','mt2','mt3'],maxZoom:20}).addTo(map); } });
+            document.getElementById("satelliteOnlyBtn")?.addEventListener("click",()=>{ if(map){ if(currentTileLayer) map.removeLayer(currentTileLayer); currentTileLayer=L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{subdomains:['mt0','mt1','mt2','mt3'],maxZoom:20}).addTo(map); } });
+            document.getElementById("resetViewBtn")?.addEventListener("click",()=>{ if(map) map.setView([-8.45,118.72],10); });
+            document.getElementById("refreshMapBtn")?.addEventListener("click",()=>refreshMap());
+            document.getElementById("exportRekapBtn")?.addEventListener("click",()=>{ let data = locations.map(l=>({Kecamatan:l.kecamatan,Desa:l.desa,"Kepemilikan":l.kepemilikan,Sengketa:l.bersengketa,"Lebar":l.lebarDepan,"Panjang":l.panjang,Zona:l.lsdStatus,Proses:l.prosesBangun,Kelayakan:analisisKelayakan(l),Dokumen:l.kelengkapanDokumen,Koordinat:l.koordinat,Catatan:l.keterangan})); const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rekapan"); XLSX.writeFile(wb, `KDMP_REKAP_${Date.now()}.xlsx`); logActivity("Ekspor Data", `Ekspor ${data.length} data ke Excel`); });
+            document.getElementById("exportKmlBtn")?.addEventListener("click",()=>{ let kml = `<?xml version="1.0"?><kml><Document>${locations.map(loc=>{ let c=parseCoordinates(loc.koordinat); return c?`<Placemark><name>${loc.desa}</name><Point><coordinates>${c[1]},${c[0]}</coordinates></Point></Placemark>`:''; }).join('')}</Document></kml>`; saveAs(new Blob([kml],{type:"application/vnd.google-earth.kml+xml"}), `KDMP_${Date.now()}.kml`); logActivity("Ekspor Data", "Ekspor KML"); });
+            document.getElementById("backupToLocalBtn")?.addEventListener("click",()=>{ const blob=new Blob([JSON.stringify(locations,null,2)],{type:"application/json"}); saveAs(blob,`KDMP_BACKUP_${new Date().toISOString().slice(0,10)}.json`); logActivity("Backup Data", "Backup JSON"); });
+            document.getElementById("restoreFromLocalBtn")?.addEventListener("click",()=>document.getElementById("restoreFileInput").click());
+            document.getElementById("restoreFileInput")?.addEventListener("change",async(e)=>{ let file=e.target.files[0]; if(!file) return; let reader=new FileReader(); reader.onload=async function(ev){ try{ let restored=JSON.parse(ev.target.result); if(Array.isArray(restored)){ for(let row of restored) await window.FirebaseSDK.addDoc(window.FirebaseSDK.collection(db, "lahan_kdmp"), row); logActivity("Restore Data", `Restore ${restored.length} data`); showSuccess("Berhasil", `${restored.length} data dipulihkan`); } else throw new Error(); } catch(err){ showError("Gagal","File tidak valid"); } }; reader.readAsText(file); e.target.value=""; });
+            document.getElementById("importExcelBtn")?.addEventListener("click",()=>document.getElementById("importExcelFileInput").click());
+            document.getElementById("importExcelFileInput")?.addEventListener("change",async(e)=>{ let file=e.target.files[0]; if(!file) return; let reader=new FileReader(); reader.onload=async function(ev){ try{ let data=new Uint8Array(ev.target.result); let workbook=XLSX.read(data,{type:'array'}); let sheet=workbook.Sheets[workbook.SheetNames[0]]; let rows=XLSX.utils.sheet_to_json(sheet); for(let row of rows){ let newData={ kecamatan:row["Kecamatan"]||"", desa:row["Desa"]||"", kepemilikan:row["Kepemilikan Lahan"]||"Lahan Desa", bersengketa:row["Bersengketa"]||"Tidak", lebarDepan:row["Lebar Depan"]?parseFloat(row["Lebar Depan"]):null, panjang:row["Panjang Kebelakang"]?parseFloat(row["Panjang Kebelakang"]):null, lsdStatus:row["LSD/LBS/LP2B"]||"Tidak", prosesBangun:row["Proses Pembangunan"]||"TIDAK", koordinat:row["Koordinat"]||"", kelengkapanDokumen:row["Kelengkapan Dokumen"]||"", keterangan:row["Keterangan"]||"" }; await window.FirebaseSDK.addDoc(window.FirebaseSDK.collection(db, "lahan_kdmp"), newData); } logActivity("Impor Data", `Impor ${rows.length} data dari Excel`); showSuccess("Berhasil", `${rows.length} data diimpor`); } catch(err){ showError("Gagal","Gagal impor Excel"); } }; reader.readAsArrayBuffer(file); e.target.value=""; });
+            document.getElementById("cancelEditBtn")?.addEventListener("click", () => { clearForm(); triggerNavTab("rekap"); });
+            document.getElementById("exportLogExcelBtn")?.addEventListener("click",()=>{ let data=activityLogs.map(l=>({TanggalWaktu:l.tanggalWaktu,NamaPengguna:l.namaPengguna,Akun:l.akun,Level:l.level,Aktivitas:l.aktivitas})); const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Log"); XLSX.writeFile(wb, `KDMP_LOG_${Date.now()}.xlsx`); });
+            document.getElementById("clearLogBtn")?.addEventListener("click",async()=>{ if(currentUser?.level !=='superadmin') return; if(await showConfirm("Hapus Semua Log?","Aksi tidak dapat dibatalkan.")){ const snap=await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(db,"activity_logs")); for(const d of snap.docs) await window.FirebaseSDK.deleteDoc(d.ref); showSuccess("Berhasil","Semua log dihapus"); } });
+            document.getElementById("logDateFrom")?.addEventListener("change",renderLogPage);
+            document.getElementById("logDateTo")?.addEventListener("change",renderLogPage);
+            document.getElementById("logTypeFilter")?.addEventListener("change",renderLogPage);
+            document.getElementById("logSearch")?.addEventListener("keyup",renderLogPage);
+        }
+        populateFormsDropdowns();
+
+        // ========= PERBAIKAN NAVIGASI =========
+        // Menambahkan event listener ke semua tombol navigasi agar perpindahan halaman berfungsi
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const page = btn.getAttribute('data-page');
+                if (page) triggerNavTab(page);
+            });
+        });
+    </script>
+</body>
+</html>
