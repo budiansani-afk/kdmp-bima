@@ -198,42 +198,75 @@
             transform: translateY(-2px);
             filter: brightness(0.98);
         }
+/* Tambahkan atau ganti di bagian style */
 
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 28px;
-            background: rgba(235, 248, 255, 0.6);
-            backdrop-filter: blur(4px);
-            margin-top: 20px;
-        }
-        .dark .table-wrapper {
-            background: rgba(0,0,0,0.25);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th {
-            background: #cbe5fe;
-            padding: 16px 12px;
-            font-weight: 700;
-            font-size: 0.8rem;
-            text-align: left;
-            color: #155f8a;
-        }
-        .dark th {
-            background: #2a577b;
-            color: #fbddb5;
-        }
-        td {
-            padding: 14px 12px;
-            border-bottom: 1px solid #cfe2f5;
-            color: #2c3e4e;
-        }
-        .dark td {
-            border-color: #3f6a8c;
-            color: #f0f3f8;
-        }
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 28px;
+    background: rgba(235, 248, 255, 0.6);
+    backdrop-filter: blur(4px);
+    margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px; /* agar tabel tidak terlalu sempit di layar kecil */
+}
+
+th {
+    background: #cbe5fe;
+    padding: 16px 12px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-align: left;
+    color: #155f8a;
+    white-space: nowrap;
+}
+
+.dark th {
+    background: #2a577b;
+    color: #fbddb5;
+}
+
+td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #cfe2f5;
+    color: #2c3e4e;
+    vertical-align: middle; /* agar tombol sejajar tengah */
+}
+
+.dark td {
+    border-color: #3f6a8c;
+    color: #f0f3f8;
+}
+
+/* Kolom aksi: buat tombol dalam satu baris tanpa wrap */
+td:last-child {
+    white-space: nowrap;
+}
+
+/* Gaya tombol aksi (edit & hapus) agar rapi */
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 0.7rem;
+    margin-right: 6px;
+    margin-bottom: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 30px;
+}
+
+/* Untuk layar sangat kecil, tombol bisa turun ke baris baru tapi tetap rapi */
+@media (max-width: 550px) {
+    td:last-child {
+        white-space: normal;
+    }
+    .btn-sm {
+        margin-bottom: 6px;
+    }
+}
         .badge {
             display: inline-block;
             padding: 5px 14px;
@@ -490,7 +523,7 @@
                 tableAkunDiv.innerHTML = '<div style="padding:40px;text-align:center;">📭 Belum ada akun terdaftar. Silakan tambah akun.</div>';
                 return;
             }
-            let html = `<tr>
+            let html = `<table>
                 <thead>
                     <tr><th>Nama Pengguna</th><th>Email</th><th>Level</th><th>Aksi</th></tr>
                 </thead>
