@@ -183,6 +183,22 @@
             margin-top: 8px;
         }
 
+        /* Tombol Selesai - gaya sekunder dengan aksen hijau */
+        .btn-selesai {
+            background: linear-gradient(95deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        .dark .btn-selesai {
+            background: linear-gradient(95deg, #1e3a2f, #2e5a4a);
+            color: #a7f3d0;
+            border-color: #2e7d5e;
+        }
+        .btn-selesai:hover {
+            transform: translateY(-2px);
+            filter: brightness(0.98);
+        }
+
         .table-wrapper {
             overflow-x: auto;
             border-radius: 28px;
@@ -299,6 +315,10 @@
             <span class="badge-role"><i class="fas fa-user-shield"></i> Admin</span>
             <span class="badge-role"><i class="fas fa-crown"></i> Superadmin</span>
         </div>
+        <!-- Security badge (informasi keamanan) -->
+        <div class="security-badge" style="justify-content: center; margin-top: 16px;">
+            <i class="fas fa-shield-alt"></i> Verifikasi wajib untuk lihat daftar & buat/edit Superadmin
+        </div>
     </div>
 
     <!-- Form Tambah/Edit Akun -->
@@ -333,6 +353,10 @@
             <button class="btn btn-primary" id="simpanBtn"><i class="fas fa-save"></i> Simpan Akun</button>
             <button class="btn btn-secondary" id="resetBtn"><i class="fas fa-undo-alt"></i> Reset Form</button>
             <button class="btn btn-secondary" id="toggleDaftarBtn"><i class="fas fa-list-ul"></i> Tampilkan Daftar Akun</button>
+            <!-- Tombol Selesai - sekarang di samping kanan tombol Tampilkan Daftar Akun -->
+            <a href="https://kdmp-bima.vercel.app" target="_self" rel="noopener noreferrer" class="btn btn-selesai" style="text-decoration: none;">
+                <i class="fas fa-check-circle"></i> Selesai
+            </a>
         </div>
         <div id="statusMessage" class="status-message" style="display: none;"></div>
     </div>
@@ -466,7 +490,7 @@
                 tableAkunDiv.innerHTML = '<div style="padding:40px;text-align:center;">📭 Belum ada akun terdaftar. Silakan tambah akun.</div>';
                 return;
             }
-            let html = `<table>
+            let html = `<tr>
                 <thead>
                     <tr><th>Nama Pengguna</th><th>Email</th><th>Level</th><th>Aksi</th></tr>
                 </thead>
@@ -488,7 +512,7 @@
                     </td>
                 </tr>`;
             }
-            html += `</tbody></table>`;
+            html += `</tbody><tr>`;
             tableAkunDiv.innerHTML = html;
         } catch (err) {
             tableAkunDiv.innerHTML = `<div style="padding:40px;text-align:center;">⚠️ Error: ${err.message}</div>`;
